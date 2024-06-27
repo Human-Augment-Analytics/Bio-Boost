@@ -6,6 +6,10 @@ Object detection has numerous applications, from animal tracking to autonomous v
 ## Experimental Setup
 ![alt text](https://github.com/Human-Augment-Analytics/Bio-Boost/Bio-Boost/imgs/setup.PNG?raw=true)
 
+![alt text]([https://github.com/Human-Augment-Analytics/Bio-Boost/Bio-Boost/imgs/setup.PNG](https://github.com/Human-Augment-Analytics/Bio-Boost/blob/main/imgs/setup.PNG)?raw=true)
+
+https://github.com/Human-Augment-Analytics/Bio-Boost/blob/main/imgs/setup.PNG
+
 ## Variance Challenges
 
 ## Models Used
