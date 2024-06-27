@@ -7,7 +7,10 @@ Object detection has numerous applications, from animal tracking to autonomous v
 ![](https://github.com/Human-Augment-Analytics/Bio-Boost/blob/main/imgs/setup.PNG)
 
 ## Variance Challenges
+![](https://github.com/Human-Augment-Analytics/Bio-Boost/blob/main/imgs/variance.PNG)
 
 ## Models Used
+![](https://github.com/Human-Augment-Analytics/Bio-Boost/blob/main/imgs/models.PNG)
 
 ## Temporal Model Decision Tree
+![](https://github.com/Human-Augment-Analytics/Bio-Boost/blob/main/imgs/tree_viz_1.PNG)
