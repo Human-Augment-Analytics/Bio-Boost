@@ -4,10 +4,12 @@ Spyder Editor
 
 This is a temporary script file.
 """
+# Imports
 import pandas as pd
 import subprocess
 import cv2
 
+# Command Variables
 cmd1 = "rclone ls "
 cmd2="rclone copy "
 cmd3="rm -r "
@@ -20,8 +22,10 @@ here=' ./'
 classes=['Male', 'Female']
 #get names of tracks needed.
 
+# Metadata Extraction for Females
 femalelist=subprocess.check_output(cmd1+path+classes[1], shell=True).decode("utf-8").split(' ')
-#cleaning subprocess output
+
+# Cleaning subprocess output
 fdf=pd.DataFrame(columns=['trial', 'base_name', 'track_id', 'sex'])
 for i in femalelist:
     try:
@@ -30,8 +34,10 @@ for i in femalelist:
         if i!='':
             fdf.loc[len(fdf.index)]=i.split('\n')[0].strip('.mp4').split('__')+[classes[1]]
 
+# Metadata Extraction for Males
 malelist=subprocess.check_output(cmd1+path+classes[0], shell=True).decode("utf-8").split(' ')
-#cleaning subprocess output
+
+# Cleaning subprocess output
 mdf=pd.DataFrame(columns=['trial', 'base_name', 'track_id', 'sex'])
 for i in malelist:
     try:
@@ -40,18 +46,25 @@ for i in malelist:
         if i!='':
             mdf.loc[len(mdf.index)]=i.split('\n')[0].strip('.mp4').split('__')+[classes[0]]
 
+# Concat Results
 track_annotations = pd.concat([fdf, mdf], axis=0)
 
+# Find Length
+# Tracks pulled from 30 trials 
 len(track_annotations.trial.unique())
-#tracks pulled from 30 trials 
 
+# Iterate over unique trials
 tracknum=0
 for i in track_annotations.trial.unique():
     sdf=track_annotations[track_annotations.trial==i]
     videolist=sdf.base_name.unique()
     print('starting trial:  '+str(i))
+
+    # Copy necessary files for the trial
     subprocess.run(cmd2+trialpaths+i+trackfile+here, shell=True)
     tdf = pd.read_csv ('./AllTrackedFish.csv')
+
+    # Process each video in the trial
     for j in videolist:
         ssdf=sdf[sdf.base_name==j]
         tracks=[int(k) for k in ssdf.track_id]
@@ -59,6 +72,8 @@ for i in track_annotations.trial.unique():
         tdf=tdf.loc[tdf.track_id.isin(tracks)]
         print('Downloading Video '+str(j)+'of '+str(videolist[-1]))
         subprocess.run(cmd2+trialpaths+i+videos+j+'.mp4'+here, shell=True)
+
+        # Process each track in the video
         for t in tracks:
             tracknum+=1
             ttdf=tdf[tdf.track_id==t]
@@ -90,10 +105,15 @@ for i in track_annotations.trial.unique():
         subprocess.run(cmd3+'./Female/*', shell=True)
         subprocess.run(cmd3+'./Male/*', shell=True)
         subprocess.run(cmd3+'./'+j+'.mp4', shell=True)
+    
+    # Cleanup after each trial
     subprocess.run(cmd3+'./AllTrackedFish.csv', shell=True)
+
+# Final steps after all trials
 print('All trials completed')
 print('moving images back to working directory')
 subprocess.run('rclone  copy CichlidPiData:BioSci-McGrath/Apps/CichlidPiData/__AnnotatedData/BreeTesting/Female ./Female/', shell=True)
 subprocess.run('rclone  copy CichlidPiData:BioSci-McGrath/Apps/CichlidPiData/__AnnotatedData/BreeTesting/Male ./Male/ ', shell=True)
 
+# Notify of Completion
 print('All commands terminated')

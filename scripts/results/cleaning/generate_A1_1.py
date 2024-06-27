@@ -8,11 +8,14 @@ Created on Mon May 27 13:08:46 2024
 import os
 import cv2
 
+# Get Directories and Image Dimensions
 label_directory = "/home/bshi/Documents/Annotation1_0/labels/train/"
 image_directory = "/home/bshi/Documents/Annotation1_0/images/train/"
 out_directory='/home/bshi/Documents/Annotation1_1_fixed/train/'
 width=1296
 height=972
+
+# Process Training Images
 for filename in os.listdir(label_directory):
     file_path = os.path.join(label_directory, filename)
     with open(file_path, 'r') as file:
@@ -38,6 +41,8 @@ for filename in os.listdir(label_directory):
             frame = img[int(max(0, yc - delta_xy)):int(min(yc + delta_xy,height)) , int(max(0, xc - delta_xy)):int(min(xc + delta_xy, width))]
             frame=cv2.resize(frame, (100, 100))
             cv2.imwrite(outFile, frame) 
+
+# Exclude These Images
 filter_images=['MC_singlenuc23_1_Tk33_021220_0003_vid_626994_M0.jpg',
  'MC_singlenuc81_1_Tk51_072920_0001_vid_28392_F0.jpg',
  'MC_singlenuc81_1_Tk51_072920_0001_vid_16997_M0.jpg',
@@ -52,11 +57,14 @@ filter_images=['MC_singlenuc23_1_Tk33_021220_0003_vid_626994_M0.jpg',
  'MC_singlenuc64_1_Tk51_060220_0002_vid_63240_F0.jpg',
  'MC_singlenuc94_b1_Tk31_081120_0001_vid_308168_F0.jpg']
 
+# Get Directories and Image Dimensions
 label_directory = "/home/bshi/Documents/Annotation1_0/labels/val/"
 image_directory = "/home/bshi/Documents/Annotation1_0/images/val/"
 out_directory='/home/bshi/Documents/Annotation1_1/validation/'
 width=1296
 height=972
+
+# Process Validation Images
 for filename in os.listdir(label_directory):
     file_path = os.path.join(label_directory, filename)
     with open(file_path, 'r') as file:

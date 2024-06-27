@@ -32,6 +32,7 @@ exp_dict={'MC_singlenuc55_2_Tk47_051220': 'exp1','MC_singlenuc91_b1_Tk9_081120':
 'MC_singlenuc82_b2_Tk63_073020': 'exp25',
 'MC_singlenuc35_11_Tk61_051220': 'exp26',
 'MC_singlenuc64_1_Tk51_060220': 'exp27' }
+
 trial_dict = {
     'exp1': 'MC_singlenuc55_2_Tk47_051220',
     'exp2': 'MC_singlenuc91_b1_Tk9_081120',

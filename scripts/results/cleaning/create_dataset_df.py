@@ -9,10 +9,12 @@ Created on Tue Jun 25 14:49:38 2024
 import pandas as pd 
 import os
 
+# Define Directories
 auto_path='/home/bshi/Dropbox (GaTech)/BioSci-McGrath/PublicIndividualData/Breanna/aim1_final/raw_data/training_data/YOLOV5_Cls_Automatic_Videos/'
 man_path='/home/bshi/Dropbox (GaTech)/BioSci-McGrath/PublicIndividualData/Breanna/aim1_final/raw_data/training_data/YOLOV5_Cls_Manual_Videos/'
 
-
+# Analyze and Organize Metadata for Model Training Data
+# Return Dataframe with Image Metadata
 class Meta_ClsModel_Analysis:
     def __init__(self, base_path):
         self.img_type=['val/','train/']
@@ -61,14 +63,15 @@ class Meta_ClsModel_Analysis:
         df['exp']=[self.exp[i] for i in df.trial]
         return df
 
+# Call Metadata Dataframe Creator
 auto_df=Meta_ClsModel_Analysis(auto_path).create_df()
 mv_df=Meta_ClsModel_Analysis(man_path).create_df()
 
-
+# Define Directories
 auto_df.to_csv('/home/bshi/Dropbox (GaTech)/BioSci-McGrath/PublicIndividualData/Breanna/aim1_final/data_frames/Meta_Data/YOLOV5_Cls_Automatic_Videos_Labels.csv')
 mv_df.to_csv('/home/bshi/Dropbox (GaTech)/BioSci-McGrath/PublicIndividualData/Breanna/aim1_final/data_frames/Meta_Data/YOLOV5_Cls_Manual_Videos_Labels.csv')
 
-
+# Compute Metrics for DF and Return Results
 def cls_p(df):
     total_train = df[df.image_type == 'train'].groupby('exp')['label'].count()
     female_pt = df[(df.image_type == 'train') & (df.label == 'female')].groupby('exp')['label'].count() / total_train
@@ -101,8 +104,11 @@ def cls_p(df):
     result = result.fillna(0)
     
     return result
+
+# Call the Metric Calculating Function
 auto_metrics=cls_p(auto_df)
 mv_metrics=cls_p(mv_df)
 
+# Save Results
 auto_metrics.to_csv('/home/bshi/Dropbox (GaTech)/BioSci-McGrath/PublicIndividualData/Breanna/aim1_final/data_frames/Meta_Data/YOLOV5_Cls_Automatic_Videos_exp.csv')
 mv_metrics.to_csv('/home/bshi/Dropbox (GaTech)/BioSci-McGrath/PublicIndividualData/Breanna/aim1_final/data_frames/Meta_Data/YOLOV5_Cls_Manual_Videos_exp.csv')
