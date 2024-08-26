@@ -36,6 +36,10 @@ class Metrics:
         nFm (float): Negative F-measure.
         bacc (float): Balanced Accuracy.
         mcc (float): Matthews Correlation Coefficient.
+
+    Example Usage:
+        metrics = Metrics(label, predict)
+        print("True Positives:", metrics.tp)
     """
     def __init__(self, label, predict):
         """
@@ -75,24 +79,3 @@ class Metrics:
         # For Unbalanced Datasets
         self.bacc=0.5*(self.tpr+self.tnr)
         self.mcc=(self.tp*self.tn-self.fp*self.fn)/np.sqrt((self.tp+self.fp)*(self.tp+self.fn)*(self.tn+self.fp)*(self.tn+self.fn))
-
-## Data Processing
-import pandas as pd
-import os
-import shutil
-
-# Load data from CSV files
-r1=pd.read_csv('/Users/breannashi/Desktop/aim1_results/Results1_0_fix.csv')
-r1_1=pd.read_csv('/Users/breannashi/Desktop/aim1_results/Result_1_1.csv')
-r2=pd.read_csv('/Users/breannashi/Desktop/aim1_results/Result_2_0.csv')
-r2_1=pd.read_csv('/Users/breannashi/Desktop/aim1_results/Result_2_1.csv')
-
-# Calculate track-wise metrics
-track_sex=r2.groupby(['trial','base_name', 'track_id'])['val_predictions'].sum()/r2.groupby(['trial','base_name', 'track_id'])['track_id'].count()
-track_l=r2.groupby(['trial','base_name', 'track_id'])['err'].sum()/r2.groupby(['trial','base_name', 'track_id'])['track_id'].count()
-
-# Create a mask for tracks with error rate greater than 0.5
-mask = (track_l > 0.5)
-
-# Filter track_l using the mask
-filtered_track_l = track_l[mask]
