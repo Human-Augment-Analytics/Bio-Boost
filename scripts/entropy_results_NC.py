@@ -1,15 +1,19 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
-Created on Mon Jun 24 11:56:08 2024
+Results
 
-@author: bshi
+The following script was used to calculate entropy for the results.
 """
+
+# Encoding, etc.
+# !/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+# Imports
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-
+# Entropy Calculation
 def entropy(predict, base=2):
     """
     Calculate the entropy of a prediction array.
@@ -34,13 +38,13 @@ def entropy(predict, base=2):
         entropy=-((num_zeros/total) * np.log2(num_zeros/total)+ (num_ones/total) * np.log2(num_ones/total))
     return abs(entropy)
 
-# Load data
-r2_1=pd.read_csv('/home/bshi/Documents/results/Result_2_1.csv')
+# Load Data
+r2_1=pd.read_csv('/home/path_to_file/Documents/results/Result_2_1.csv')
 r2_1['err']=abs(r2_1.label-r2_1.class_id)
-r2_2=pd.read_csv('/home/bshi/Documents/results/Results2_2.csv')
-r2_3=pd.read_csv('/home/bshi/Documents/results/Results2_3.csv')
+r2_2=pd.read_csv('/home/path_to_file/Documents/results/Results2_2.csv')
+r2_3=pd.read_csv('/home/path_to_file/Documents/results/Results2_3.csv')
 
-# Create ground truth and prediction columns
+# Create Ground Truth and Prediction Columns
 r2_2['gt'] = [0 if i == 'male' else 1 for i in r2_2.label]
 r2_2['pred'] = [0 if i == 'male' else 1 for i in r2_2.prediction]
 r2_2['id'] = r2_2['trial'] + '__' + r2_2['base_name'] + '__' + r2_2['track_id'].astype(str)
@@ -54,21 +58,20 @@ track2_1 = r2_1.groupby(['id'])['class_id']
 track2_2 = r2_2.groupby(['id'])['pred']
 track2_3 = r2_3.groupby(['id'])['pred']
 
-# Calculate entropy for each group
+# Calculate Entropy for Each Group
 e2_1 = track2_1.apply(lambda x: entropy(x))
 e2_2 = track2_2.apply(lambda x: entropy(x))
 e2_3 = track2_3.apply(lambda x: entropy(x))
 
-# Define percentiles and accuracy lists
+# Define Percentiles and Accuracy Lists
 precent=[0.1, 0.2,0.3, 0.4,0.5, 0.6, 0.7, 0.8, 0.9]
 acc2_1=[]
 acc2_2=[]
 acc2_3=[]
 
+# Calculate Accuracy using MCC
 def get_acc(df, label, predict):
     """
-    Calculate accuracy using MCC metric.
-
     Parameters:
         df (pd.DataFrame): DataFrame containing label and prediction columns.
         label (str): Column name of the ground truth labels.
@@ -81,7 +84,7 @@ def get_acc(df, label, predict):
     acc=metrics.get_metrics()['mcc']
     return acc
 
-# Calculate accuracy for each percentile
+# Calculate Accuracy for Each Percentile
 for p in precent:
     q_e2_1 = e2_1.quantile(p)
     entropy_mask = e2_1 >= q_e2_1
@@ -102,38 +105,28 @@ for p in precent:
     acc3=get_acc(df2_3, 'gt', 'pred')
     acc2_3.append(acc3)
 
-# Plot results
-
+# Plot Results
 plt.figure(figsize=(10, 6))
 plt.plot(precent, acc2_1, label='Manual frame', marker='o')
 plt.plot(precent, acc2_2, label='Manual video', marker='s')
 plt.plot(precent, acc2_3, label='Automatic', marker='^')
-
 plt.xlabel('Percentile')
 plt.ylabel('mcc')
 plt.title('Accuracy by entropy percentile')
 plt.legend()
 plt.grid(True)
-
 plt.xticks(precent)
 plt.ylim(0, 1)  # Assuming accuracy is between 0 and 1
 plt.savefig('./figures/fig7_title.png', dpi=300, bbox_inches='tight')
 plt.show()
 
-# Plot without labels and titles
-import matplotlib.pyplot as plt
-
+# Plot without Labels and Titles
 plt.figure(figsize=(10, 6))
 plt.plot(precent, acc2_1, marker='o')
 plt.plot(precent, acc2_2, marker='s')
 plt.plot(precent, acc2_3,  marker='^')
-
-#plt.xlabel('Percentile')
-#plt.ylabel('acc')
-#plt.title('Accuracy by entropy percentile')
 plt.legend()
 plt.grid(True)
-
 plt.xticks(precent)
 plt.ylim(0, 1)  # Assuming accuracy is between 0 and 1
 plt.savefig('./figures/fig7.png', dpi=300, bbox_inches='tight')
