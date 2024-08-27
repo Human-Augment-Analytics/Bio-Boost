@@ -1,16 +1,7 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[6]:
-
-
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Fri Jun 21 12:47:03 2024
 
-@author: bshi
-"""
+# Imports
 import numpy as np
 import pandas as pd
 
