@@ -6,7 +6,7 @@ made by two different annotators. The annotations were first compared with
 metrics and then visualized to identify differences.
 """
 
-# UTF-8
+# Encoding, etc.
 # -*- coding: utf-8 -*-
 
 # Imports

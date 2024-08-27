@@ -1,15 +1,17 @@
-#!/usr/bin/env python3
+"""
+Results, Class Imbalance
+
+The following script was used to calculate various metrics used in the results.
+"""
+
+# Encoding, etc.
+# !/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-"""
-Created on Mon Jun 17 18:01:44 2024
-
-@author: breannashi
-"""
-
-## Metrics Calculation
+# Imports
 import numpy as np
 
+# Metrics Calculation
 class Metrics:
     """
     A class to calculate various metrics for binary classification.
