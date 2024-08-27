@@ -7,6 +7,7 @@ Created on Mon Jun 24 11:56:08 2024
 """
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 def entropy(predict, base=2):
@@ -102,7 +103,6 @@ for p in precent:
     acc2_3.append(acc3)
 
 # Plot results
-import matplotlib.pyplot as plt
 
 plt.figure(figsize=(10, 6))
 plt.plot(precent, acc2_1, label='Manual frame', marker='o')

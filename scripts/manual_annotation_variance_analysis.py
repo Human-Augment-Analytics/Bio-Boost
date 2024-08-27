@@ -1,4 +1,6 @@
 """
+Manual Annotation, Data Filtering
+
 The following script was used to evaluate the consistency of the annotations
 made by two different annotators. The annotations were first compared with 
 metrics and then visualized to identify differences.
