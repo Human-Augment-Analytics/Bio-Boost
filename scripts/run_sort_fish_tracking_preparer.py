@@ -1,8 +1,7 @@
 """
 SORT
 
-The following class prepares and analyzes fish tracking data using YOLOv5 
-and SORT algorithms.
+The following class prepares fish tracking data.
 """
 
 # Imports
@@ -12,16 +11,16 @@ from shapely.geometry import Point, Polygon
 # Class to Prepare and Analyze Fish Tracking
 class FishTrackingPreparer():
 	"""
-    This class performs the following tasks:
-    1. Detects fish objects and classifies them into normal or reflection using a YOLOv5 model.
-    2. Automatically identifies bower locations.
-    3. Analyzes the building, shape, and other pertinent information of the bower.
+	This class performs the following tasks:
+	1. Detects fish objects and classifies them into normal or reflection using a YOLOv5 model.
+	2. Automatically identifies bower locations.
+	3. Analyzes the building, shape, and other pertinent information of the bower.
 
-    Attributes:
-        fileManager: An instance of FileManager to manage file operations.
-        videoObj: An object representing the video being analyzed.
-        videoIndex: Index of the video in the dataset.
-    """
+	Attributes:
+    	fileManager: An instance of FileManager to manage file operations.
+    	videoObj: An object representing the video being analyzed.
+    	videoIndex: Index of the video in the dataset.
+	"""
 
 	def __init__(self, fileManager, videoIndex):
 		"""
@@ -98,3 +97,4 @@ class FishTrackingPreparer():
 
 		output = subprocess.Popen('bash -c \"' + command + '\"', shell = True, stderr = open(os.getenv('HOME') + '/' + self.videoObj.baseName + '_trackingerrors.txt', 'w'), stdout=subprocess.DEVNULL)
 		return output
+	

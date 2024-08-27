@@ -82,3 +82,4 @@ class Metrics:
         # For Unbalanced Datasets
         self.bacc=0.5*(self.tpr+self.tnr)
         self.mcc=(self.tp*self.tn-self.fp*self.fn)/np.sqrt((self.tp+self.fp)*(self.tp+self.fn)*(self.tn+self.fp)*(self.tn+self.fn))
+        

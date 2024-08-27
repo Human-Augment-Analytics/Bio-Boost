@@ -351,3 +351,4 @@ for i in range(len(df.trial.copy())):
         include_trial.append(list(df.trial)[i])
         if mcgrath_score[i]<3:
             print(list(df.trial)[i])
+            

@@ -132,4 +132,3 @@ pred_values = np.where(np.array(track2_2['pred'].values) > 0.5, 1, 0)
 total_acc = (track2_2['gt'].values == pred_values).sum() / len(pred_values)
 print("Total Accuracy:", total_acc)
 print("Number of replaced values:", track2_2.index.isin(combined_results['id']).sum())
-
