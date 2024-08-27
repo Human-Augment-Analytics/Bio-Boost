@@ -1,7 +1,7 @@
 """
 TemporalBoost
 
-The following is code to run the temporal model.
+This code integrates data from the temporal model.
 """
 
 # Encoding, etc.
