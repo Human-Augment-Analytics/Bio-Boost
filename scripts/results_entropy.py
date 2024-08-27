@@ -26,7 +26,6 @@ def entropy(predict, base=2):
         float: Entropy value.
     """
     predict = np.array(predict)
-    
     total = len(predict)
     num_zeros = np.sum(predict == 0)
     num_ones = np.sum(predict == 1)
