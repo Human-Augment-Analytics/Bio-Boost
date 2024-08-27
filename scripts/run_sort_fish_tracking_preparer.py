@@ -1,7 +1,8 @@
 """
 SORT
 
-The following class prepares and analyzes fish tracking data using YOLOv5 and SORT algorithms.
+The following class prepares and analyzes fish tracking data using YOLOv5 
+and SORT algorithms.
 """
 
 # Imports
