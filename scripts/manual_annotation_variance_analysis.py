@@ -1,9 +1,13 @@
-# -*- coding: utf-8 -*-
 """
-Spyder Editor
+The following script was used to evaluate the consistency of the annotations
+made by two different annotators. The annotations were first compared with 
+metrics and then visualized to identify differences.
+"""
 
-This is a temporary script file.
-"""
+# UTF-8
+# -*- coding: utf-8 -*-
+
+# Imports
 import pycoral.adapters.detect as pc
 import fiftyone as fo
 import os
@@ -11,20 +15,22 @@ import pdb
 import pandas as pd
 import numpy as np
 from fiftyone import ViewField as F
-
-root_1='/home/bshi/Documents/blind_annotation_testing/Patrick_CVAT_dataset/'
-root_2='/home/bshi/Documents/blind_annotation_testing/BreeTucker_CVAT_dataset/'
-
-labels_start='obj_train_data/obj_train_data/'
-label_end='.txt'
-annotator1='Patrick'
-annotator2='BreeTucker'
-
 import glob
 import os
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Annotation File Paths and File Reading
+root_1='/path_to_dataset/blind_annotation_testing/Annotator1_CVAT_dataset/'
+root_2='/path_to_dataset/blind_annotation_testing/Annotator2_CVAT_dataset/'
+labels_start='obj_train_data/obj_train_data/'
+label_end='.txt'
+annotator1='Annotator1'
+annotator2='Annotator2'
 text1 = glob.glob(root_1+labels_start+'*.txt')
 text2= glob.glob(root_2+labels_start+'*.txt')
 
+# Transform Bounding Box Coords from Yolo Format to Calculation Format
 def convert(yolo_list, flag='off'):
     x1=yolo_list[0]-(yolo_list[2]/2)
     y1=yolo_list[1]-(yolo_list[3]/2)
@@ -35,9 +41,9 @@ def convert(yolo_list, flag='off'):
         y1=yolo_list[1]
         x2=yolo_list[0]+(yolo_list[2])
         y2=yolo_list[1]+(yolo_list[3])
-        
     return [x1,y1,x2,y2]
 
+# Find and Remove Inconsisten Bounding Box Annotations
 def find_bad(location, label, bbox):
     bbox=convert(bbox, flag='on')
     bad_box=pc.BBox(bbox[0], bbox[1], bbox[2], bbox[3])
@@ -49,7 +55,7 @@ def find_bad(location, label, bbox):
             iou=pc.BBox.iou(bad_box, pc.BBox(i[0], i[1], i[2], i[3]))
             score.append(iou)
         iou_map.append(np.argmax(score))
-    
+
     if iou_map[0]==iou_map[1]:
         location[0]=location[0][:iou_map[0]]+location[0][iou_map[0]+1:]
         location[1]=location[1][:iou_map[0]]+location[1][iou_map[0]+1:]
@@ -59,6 +65,7 @@ def find_bad(location, label, bbox):
         pdb.set_trace()
     return location, label
 
+# Adjust Bounding Box Annotations
 def crop_annotation(location, label, imageid):
     dataset = fo.load_dataset("master_dataset")
     sub_ds=dataset.match(F('image_uid').ends_with(imageid))
@@ -72,9 +79,7 @@ def crop_annotation(location, label, imageid):
                 new_location=location
     return new_location, label
 
-
-
-
+# Align and Match Bounding Boxes of the Two Annotators Based on IoU Scores
 def iou_mapping(location,label):
     a=location[0]
     b=location[1]
@@ -105,6 +110,7 @@ def iou_mapping(location,label):
     else:
         pdb.set_trace()
 
+# Load and Process Annotation Data from Files
 def associate_files(paths, uid):
     label=[]
     location=[]
@@ -127,8 +133,10 @@ def associate_files(paths, uid):
     else:
         pdb.set_trace()
 
+# Load Dataset from FiftyOne
 dataset = fo.load_dataset("master_dataset")
 
+# Load and Processes Data, Aggregates and Analyzes Data
 out_count=0
 a_df = pd.DataFrame(columns=['trialid', 'imageid', 'detectionid', annotator1, annotator2])
 for sample in dataset:
@@ -162,6 +170,7 @@ df=pd.DataFrame(columns=['trial', 'acc'])
 df['trial']=list(df1.index)
 df['acc']=acc
 
+# Compare the Proportion of Male Detections in Annotations Made by the Annotators
 males=a_df[a_df[annotator2]==0].groupby('trialid')['trialid'].count()
 total=a_df.groupby('trialid')['trialid'].count()
 missing=list(set(total.index)-set(males.index))
@@ -179,15 +188,15 @@ males=males.reindex(total.index)
 p_male=males.values/total.values
 print(males.index==df.trial)
 
-
+# Create DF to Summarize and Store Results of Detections for Different Trials
 final_df=pd.DataFrame(columns=['trial', 'PBT_acc', 'P_pmales', 'BT_pmales'])
 final_df['trial']=df.trial.copy()
-
 final_df['PBT_acc']=df.acc.copy()
 final_df['P_pmales']=p_male.copy()
 final_df['BT_pmales']=bt_male.copy()
 final_df.to_csv('./PBT_acc_compare_final.csv')
 
+# Perform Calculations to Compare Proportions of Male Detections
 PBT_Amales=(bt_male.copy()+p_male.copy())/2
 PBT_Imales=(np.array([1]*len(PBT_Amales))-PBT_Amales)
 PBT_racc=[]
@@ -197,40 +206,35 @@ for i in range(len(PBT_Amales)):
 PBT_racc=np.array(PBT_racc)
 PBT_acc=df.acc.copy()
 
-import numpy as np
-import matplotlib.pyplot as plt
-
-# Generate sample data
+# Generate Sample Data
 x = PBT_acc
 y =  PBT_racc
 
-# Create scatter plot
+# Create Scatter Plot, Add Labels, and Show Plot
 plt.scatter(x, y)
 #plt.plot( [0, 0.6], [0.4, 1])
-# Add labels
 #plt.annotate(trial[1].split('c')[1].split('T')[0], (x[1], y[1]))
 #plt.annotate(trial[0].split('c')[1].split('T')[0], (x[0], y[0])) 
 #plt.annotate(trial[22].split('c')[1].split('T')[0], (x[22], y[22]))
 #plt.annotate(trial[2].split('c')[1].split('T')[0], (x[2], y[2])) 
 plt.xlabel('PBT_acc') 
 plt.ylabel('PBT_racc')
-
-# Show plot
 plt.show()
 
-
-
+# Store and Organize Metrics Related to the Trials
 acc_df=pd.DataFrame(columns=['trial', 'PBT_acc', 'PBT_racc'])
 acc_df['trial']=df.trial.copy()
 acc_df['PBT_acc']=PBT_acc
 acc_df['PBT_racc']=PBT_racc
 
+# Categorize Trials Based on Accuracy Metrics and Thresholds
 bad_thres=0.15
 unknown_thres=0.9
 PBT_bad=set(acc_df[PBT_racc>=(PBT_acc-bad_thres)].trial)
 PBT_unknown=set(acc_df[PBT_racc>=(unknown_thres)].trial)
 PBT_exclude=PBT_bad- PBT_unknown
 
+# Collect and Save McGraph Scores from Each Trial
 mcgrath_score=[]
 for i in df.trial:
     print(i)
@@ -239,13 +243,12 @@ for i in df.trial:
 acc_df['mcgrath_score']=mcgrath_score
 acc_df.to_csv('final_PBT_acc.csv')
 
-
-
+# Categorize Trials Based on McGrath Scores
 mcgrath_bad=set(acc_df[acc_df.mcgrath_score<=5].trial)
 mcgrath_good=set(acc_df[acc_df.mcgrath_score>5].trial)
 
+# Print Trial Scores and Percentages
 print('trial scores less than or equal to 5 and in at least meets threshold for inconclusive trial ')
-
 print(PBT_unknown & mcgrath_bad)
 print('trial scores less than or equal to 5 and in at least meets threshold for bad trial ')
 print(PBT_exclude & mcgrath_bad)
@@ -253,14 +256,11 @@ print('trial scores greater than 5 and in at least meets threshold for inconclus
 print(PBT_unknown & mcgrath_good)
 print('trial scores greater than 5 and in at least meets threshold for bad trial')
 print(PBT_exclude & mcgrath_good)
-
-
 print('union')
 bpercent_bad=len(PBT_exclude & mcgrath_bad)/len(mcgrath_bad)
 bpercent_unknown=len(PBT_unknown & mcgrath_bad)/len(mcgrath_bad)
 gpercent_bad=len(PBT_exclude & mcgrath_good)/len(mcgrath_good)
 gpercent_unknown=len(PBT_unknown & mcgrath_good)/len(mcgrath_good)
-
 print('percent of scored bad deemed threshold bad')
 print(bpercent_bad)
 print('percent of scored bad deemed threshold inconclusive')
@@ -270,7 +270,7 @@ print(gpercent_bad)
 print('percent of scored good deemed threshold inconclusive')
 print(gpercent_unknown)
 
-#thresholding
+# Thresholding Analysis
 x_values = np.arange(0.005, 0.5, 0.005)
 scores = np.empty((x_values.shape[0], 2))
 gscores=np.empty((x_values.shape[0], 1))
@@ -284,77 +284,62 @@ for i, threshold in enumerate(x_values):
     
     gscores[i]=gpercent_bad
 
-
-import numpy as np
-import matplotlib.pyplot as plt
-
-
-
-# Populate scores array 
-
+# Line Plot for Threshold Values and Percentage Categorized as Bad or Good
 plt.plot(x_values, scores[:,0], label='Percent Bad')
 plt.plot(x_values, gscores, label='Percent Good')
-
 plt.xlabel('Threshold')
 plt.ylabel('Percent')
 plt.title('Accuracy vs Threshold')
 plt.legend()
-
 plt.show()
 
-import numpy as np
-import matplotlib.pyplot as plt
-
-
-
-# Populate scores array 
-
+# Line Plot for How Accuracy Changes Based on Threshold Value
 plt.plot(x_values, scores.mean(axis=1), label='Average acc')
-
-
 plt.xlabel('Threshold')
 plt.ylabel('Percent')
 plt.title('ave Accuracy vs Threshold')
 plt.legend()
-
 plt.show()
 
+# Find the Best Threshold and Get Final Scores
 final_thres=x_values[np.argmax(scores.mean(axis=1))]
 final_b=scores[np.argmax(scores.mean(axis=1)), 0]
 final_g=gscores[np.argmax(scores.mean(axis=1))]
 marker=[]
+
+# Assign Markers
 for i in df.trial:
     if i in mcgrath_good:
         marker.append('^')
     else:
         marker.append('v')
+
+# Scatter Plot
 for i in range(len(PBT_acc)):
     if PBT_racc[i]>=PBT_acc[i]-0.125:
         plt.scatter(PBT_acc[i], PBT_racc[i], c='r', marker=marker[i])
     else:
         plt.scatter(PBT_acc[i], PBT_racc[i], c='g', marker=marker[i])
 
+# Generate Plot to Visualize Accuracy and Rate Accuracy
 xmin, xmax = plt.xlim()
 plt.plot([xmin, xmax], [xmin-0.125, xmax-0.125], 'k--')
-
 plt.xlabel('acc')
 plt.ylabel('racc')
 plt.title('Exlcuded versus Included Trials')
-
 plt.show()
 
+# Generate Plot to Visualize Metrics of Male Percentages across Trials
 x=final_df['P_pmales']
 y=final_df['BT_pmales']
-
-
 plt.scatter(x, y)
 xmin, xmax = plt.xlim()
 plt.plot([xmin, xmax], [xmin, xmax], 'k--')
 plt.xlabel('BT_pmales') 
 plt.ylabel('P_pmales')
-
-# Show plot
 plt.show()
+
+# Categorize Trial Based on Accuracy and Rate Accuracy
 exclude_trial=[]
 include_trial=[]
 for i in range(len(df.trial.copy())):
