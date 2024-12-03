@@ -28,12 +28,12 @@ def extract_video_from_bag(bag_file: str, output_dir: str, fps: int, remove: boo
             print(f"No video topics found in {bag_file}. Skipping.")
             return
 
-        # Get the frame size and initialize the video writer
-        frame_width, frame_height = None, None
-        video_writer = None
-
         if len(video_topics) > 0:
-            for video_topic in video_topics:
+            for i, video_topic in enumerate(video_topics):
+                # Get the frame size and initialize the video writer
+                frame_width, frame_height = None, None
+                video_writer = None
+
                 for topic, msg, t in bag.read_messages(topics=[video_topic]):
                     # Convert ROS image message to OpenCV format
                     if msg._type == "sensor_msgs/CompressedImage":
@@ -50,7 +50,7 @@ def extract_video_from_bag(bag_file: str, output_dir: str, fps: int, remove: boo
                     elif msg._type == "sensor_msgs/Image":
                         if msg.encoding == "8UC1" or msg.encoding == "mono8":
                             try:
-                                cv_image = bridge.imgmsg_to_cv2(msg, "mono8")  # Grayscale image
+                                cv_image = bridge.imgmsg_to_cv2(msg)  # Grayscale image
                             except Exception:
                                 print(f'Tried converting {msg.encoding} to mono8. Skipping...')
                                 continue
@@ -61,7 +61,7 @@ def extract_video_from_bag(bag_file: str, output_dir: str, fps: int, remove: boo
                     else:
                         continue
 
-                    print(video_topic)
+                    # print(video_topic)
 
                     type_comp = None
                     for comp in video_topic.split('/'):
@@ -80,7 +80,8 @@ def extract_video_from_bag(bag_file: str, output_dir: str, fps: int, remove: boo
                             output_video_file,
                             cv2.VideoWriter_fourcc(*'mp4v'),
                             fps,  # Use the specified FPS
-                            (frame_width, frame_height)
+                            (frame_width, frame_height),
+                            isColor=(cv_image.ndim == 3)
                         )
 
                     video_writer.write(cv_image)
@@ -90,7 +91,7 @@ def extract_video_from_bag(bag_file: str, output_dir: str, fps: int, remove: boo
                     video_writer.release()
                     print(f"Saved video to {output_video_file}")
 
-                    if remove:
+                    if remove and (i == len(video_topics) - 1):
                         os.remove(bag_file)
                 else:
                     print(f'No videos saved from {video_topic}. Moving on...\n')
