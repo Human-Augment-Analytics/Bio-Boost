@@ -37,21 +37,31 @@ def extract_video_from_bag(bag_file: str, output_dir: str, fps: int, remove: boo
                 for topic, msg, t in bag.read_messages(topics=[video_topic]):
                     # Convert ROS image message to OpenCV format
                     if msg._type == "sensor_msgs/CompressedImage":
-                        if msg.encoding == "8UC1":
-                            cv_image = bridge.compressed_imgmsg_to_cv2(msg, "mono8")
+                        if msg.encoding == "8UC1" or msg.encoding == "mono8":
+                            try:
+                                cv_image = bridge.compressed_imgmsg_to_cv2(msg, "mono8")
+                            except Exception:
+                                print(f'Tried converting {msg.encoding} to mono8. Skipping...')
+                                continue
                         else:
-                            cv_image = bridge.compressed_imgmsg_to_cv2(msg, "brg8")  # Use brg8 encoding
+                            cv_image = bridge.compressed_imgmsg_to_cv2(msg, "bgr8")  # Use brg8 encoding
 
                         # cv_image = bridge.compressed_imgmsg_to_cv2(msg, "bgr8")
                     elif msg._type == "sensor_msgs/Image":
                         if msg.encoding == "8UC1" or msg.encoding == "mono8":
-                            cv_image = bridge.imgmsg_to_cv2(msg, "mono8")  # Grayscale image
+                            try:
+                                cv_image = bridge.imgmsg_to_cv2(msg, "mono8")  # Grayscale image
+                            except Exception:
+                                print(f'Tried converting {msg.encoding} to mono8. Skipping...')
+                                continue
                         else:
-                            cv_image = bridge.imgmsg_to_cv2(msg, "brg8")  # Use brg8 encoding
+                            cv_image = bridge.imgmsg_to_cv2(msg, "bgr8")  # Use brg8 encoding
 
                         # cv_image = bridge.imgmsg_to_cv2(msg, "bgr8")
                     else:
                         continue
+
+                    print(video_topic)
 
                     type_comp = None
                     for comp in video_topic.split('/'):
@@ -60,7 +70,7 @@ def extract_video_from_bag(bag_file: str, output_dir: str, fps: int, remove: boo
                             break
 
                     if not type_comp:
-                        print(f'Error: check this code (line 57)!')
+                        print(f'Error: check this code (line 73)!')
 
                     output_video_file = os.path.join(output_dir, f"{base_name}_{type_comp}.mp4")
 
@@ -83,9 +93,8 @@ def extract_video_from_bag(bag_file: str, output_dir: str, fps: int, remove: boo
                     if remove:
                         os.remove(bag_file)
                 else:
-                    print(f'Error: check this code (line 80)!')
+                    print(f'No videos saved from {video_topic}. Moving on...\n')
 
-                    sys.exit(1)
         else:
             print(f"No frames extracted from {bag_file}. Skipping.")
 
