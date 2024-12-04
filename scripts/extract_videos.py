@@ -61,8 +61,9 @@ def extract_video_from_bag(bag_file: str, output_dir: str, fps: int, remove: boo
                     else:
                         continue
 
-                    if cv_image.ndim == 0:
+                    if cv_image.ndim == 3:
                         cv_image = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
+                        # print(f'gray image shape: {cv_image.shape}')
 
                     # print(video_topic)
 
@@ -84,7 +85,7 @@ def extract_video_from_bag(bag_file: str, output_dir: str, fps: int, remove: boo
                             cv2.VideoWriter_fourcc(*'mp4v'),
                             fps,  # Use the specified FPS
                             (frame_width, frame_height),
-                            isColor=(cv_image.ndim == 3)
+                            isColor=False
                         )
 
                     video_writer.write(cv_image)
