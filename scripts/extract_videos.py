@@ -94,7 +94,7 @@ def extract_video_from_bag(bag_file: str, output_dir: str, fps: int, remove: boo
                     video_writer.release()
                     print(f"Saved video to {output_video_file}")
 
-                    if remove and (i == len(video_topics) - 1)cd:
+                    if remove and (i == len(video_topics) - 1):
                         os.remove(bag_file)
                 else:
                     print(f'No videos saved from {video_topic}. Moving on...\n')
