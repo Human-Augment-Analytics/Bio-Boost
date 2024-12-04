@@ -61,6 +61,9 @@ def extract_video_from_bag(bag_file: str, output_dir: str, fps: int, remove: boo
                     else:
                         continue
 
+                    if cv_image.ndim == 0:
+                        cv_image = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
+
                     # print(video_topic)
 
                     type_comp = None
@@ -91,7 +94,7 @@ def extract_video_from_bag(bag_file: str, output_dir: str, fps: int, remove: boo
                     video_writer.release()
                     print(f"Saved video to {output_video_file}")
 
-                    if remove and (i == len(video_topics) - 1):
+                    if remove and (i == len(video_topics) - 1)cd:
                         os.remove(bag_file)
                 else:
                     print(f'No videos saved from {video_topic}. Moving on...\n')
