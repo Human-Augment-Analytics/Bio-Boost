@@ -42,6 +42,7 @@ Further Information:
 
 # Imports
 from __future__ import print_function
+from typing import Iterable
 import numpy as np
 import pandas as pd
 from filterpy.kalman import KalmanFilter
@@ -52,8 +53,16 @@ np.random.seed(0)
 IMG_W = 1296
 IMG_H = 972
 
-# Solves The Linear Assignment Problem using LAP or Scipy
-def linear_assignment(cost_matrix):
+def linear_assignment(cost_matrix: np.ndarray) -> np.ndarray:
+    """
+    Solves The Linear Assignment Problem using LAP or Scipy
+
+    Parameters:
+        cost_matrix (np.ndarray): table giving cost associated with different outcomes.
+
+    Returns:
+        np.ndarray: Array of index pairs representing the optimal assignment. 
+    """
     try:
         import lap
         _, x, y = lap.lapjv(cost_matrix, extend_cost=True)
@@ -63,10 +72,16 @@ def linear_assignment(cost_matrix):
         x, y = linear_sum_assignment(cost_matrix)
         return np.array(list(zip(x, y)))
 
-# Computes the Intersection Over Union (IOU) between Two Bounding Boxes
-def iou_batch(bb_test, bb_gt):
+def iou_batch(bb_test: np.ndarray, bb_gt: np.ndarray) -> np.ndarray:
     """
-    From SORT: Computes IOU between two bboxes in the form [x1,y1,x2,y2]
+    From SORT: Computes Intersection Over Union (IOU) between two bboxes in the form [x1,y1,x2,y2]
+
+    Parameters:
+        bb_test (np.ndarray): Array containing bounding boxes
+        bb_gt (np.ndarray): Array containing ground truth boxes
+    
+    Returns:
+        np.ndarray: The IOU between bb_test and bb_gt
     """
     bb_gt = np.expand_dims(bb_gt, 0)
     bb_test = np.expand_dims(bb_test, 1)
@@ -82,10 +97,15 @@ def iou_batch(bb_test, bb_gt):
     return (o)
 
 # Converts Bounding Box Coordinates to Center, Area, and Aspect Ratio Format
-def convert_bbox_to_z(bbox):
+def convert_bbox_to_z(bbox: np.array) -> np.array:
     """
-    Takes a bounding box in the form [x1,y1,x2,y2] and returns z in the form
-        [x,y,s,r] where x,y is the centre of the box and s is the scale/area and r is
+    Converts a bounding box in the form [x1,y1,x2,y2] to [x,y,s,r].
+
+    Parameters:
+        bbox (np.array): Array containing bounding box coordinates
+
+    Returns:
+        np.array: Array in form [x,y,s,r] where x,y is the centre of the box and s is the scale/area and r is
         the aspect ratio
     """
     w = bbox[2] - bbox[0]
@@ -97,10 +117,16 @@ def convert_bbox_to_z(bbox):
     return np.array([x, y, s, r]).reshape((4, 1))
 
 # Converts Bounding Box from Center Form to Corner Coordinates
-def convert_x_to_bbox(x, score=None):
+def convert_x_to_bbox(x: np.array, score: float = None) -> np.array:
     """
-    Takes a bounding box in the centre form [x,y,s,r] and returns it in the form
-        [x1,y1,x2,y2] where x1,y1 is the top left and x2,y2 is the bottom right
+    Converts a bounding box in the centre form [x,y,s,r] to [x1,y1,x2,y2].
+
+    Parameters:
+        x (np.array): Bounding box in the center form [x,y,s,r].
+        score (float, optional): Confidence score.
+
+    Returns:
+        np.array: Array in the form [x1,y1,x2,y2] where x1,y1 is the top left and x2,y2 is the bottom right.
     """
     w = np.sqrt(x[2] * x[3])
     h = x[2] / w
@@ -116,9 +142,12 @@ class KalmanBoxTracker(object):
     """
     count = 0
 
-    def __init__(self, bbox):
+    def __init__(self, bbox: np.array) -> None:
         """
         Initialises a tracker using initial bounding box.
+
+        Parameters:
+            bbox (np.array): Bounding box in [x1,y1,x2,y2,p_value,detclass] format.
         """
         # Define constant velocity model
         self.kf = KalmanFilter(dim_x=7, dim_z=4)
@@ -147,9 +176,12 @@ class KalmanBoxTracker(object):
         self.detclass = bbox[5]
         self.p_value = bbox[4]
 
-    def update(self, bbox):
+    def update(self, bbox: np.array) -> None:
         """
         Updates the state vector with observed bbox.
+
+        Parameters:
+            bbox (np.array): Bounding box in [x1,y1,x2,y2,p_value,detclass] format.
         """
         self.time_since_update = 0
         self.history = []
@@ -159,9 +191,12 @@ class KalmanBoxTracker(object):
         self.detclass = bbox[5]
         self.p_value = bbox[4]
 
-    def predict(self):
+    def predict(self) -> np.array:
         """
         Advances the state vector and returns the predicted bounding box estimate.
+
+        Returns:
+            np.array: predicted bounding box estimate
         """
         if ((self.kf.x[6] + self.kf.x[2]) <= 0):
             self.kf.x[6] *= 0.0
@@ -174,9 +209,12 @@ class KalmanBoxTracker(object):
         self.history.append(convert_x_to_bbox(self.kf.x))
         return self.history[-1]
 
-    def get_state(self):
+    def get_state(self) -> np.array:
         """
-        Returns the current bounding box estimate.
+        Gives the current bounding box estimate.
+
+        Returns:
+            np.array: Array containing current bounding box estimate
         """
         arr_detclass = np.expand_dims(np.array([self.detclass]), 0)
         arr_det_pvalue = np.expand_dims(np.array([self.p_value]), 0)
@@ -189,13 +227,20 @@ class KalmanBoxTracker(object):
         return np.concatenate((convert_x_to_bbox(self.kf.x), arr_detclass, arr_u_dot, arr_v_dot, arr_s_dot, arr_det_pvalue), axis=1)
 
 # Matches Detections to Trackers Based on IoU Threshold
-def associate_detections_to_trackers(detections, trackers, iou_threshold=0.3):
+def associate_detections_to_trackers(detections: np.array, trackers: np.array, iou_threshold: float = 0.3) -> tuple:
     """
-    Assigns detections to tracked object (both represented as bounding boxes)
-    Returns 3 lists of
-    1. matches,
-    2. unmatched_detections
-    3. unmatched_trackers
+    Assigns detections to tracked object (both represented as bounding boxes).
+
+    Parameters:
+        detections (np.array): Array of detected bounding boxes in [x1, y1, x2, y2, score] format.
+        trackers (np.array): Array of tracked bounding boxes in [x1, y1, x2, y2] format.
+        iou_threshold (float, optional): IoU threshold to match detection to a tracker.
+
+    Returns:
+        tuple:
+            - matches (np.array)
+            - unmatched_detections (np.array)
+            - unmatched_trackers (np.array)
     """
     if (len(trackers) == 0):
         return np.empty((0, 2), dtype=int), np.arange(len(detections)), np.empty((0, 5), dtype=int)
@@ -241,9 +286,14 @@ def associate_detections_to_trackers(detections, trackers, iou_threshold=0.3):
 
 # SORT Class
 class Sort(object):
-    def __init__(self, max_age=5, min_hits=3, iou_threshold=0.3):
+    def __init__(self, max_age: int = 5, min_hits: int = 3, iou_threshold: float = 0.3) -> None:
         """
         Sets key parameters for SORT
+
+        Parameters:
+            max_age (int, optional): Sets the max age for SORT.
+            min_hits (int, optional): Minimum consecutive detections for a tracker.
+            iou_threshold (float, optional): IoU threshold to match detection to a tracker.
         """
         self.max_age = max_age
         self.min_hits = min_hits
@@ -251,14 +301,21 @@ class Sort(object):
         self.trackers = []
         self.frame_count = 0
 
-    def update(self, dets=None):
+    def update(self, dets: Iterable = None) -> np.array:
         """
-        Params:
-        dets - a numpy array of detections in the format [[x1,y1,x2,y2,score],[x1,y1,x2,y2,score],...]
-        Requires: this method must be called once for each frame even with empty detections (use np.empty((0, 5)) for
-        frames without detections). Returns the a similar array, where the last column is the object ID.
+        Update trackers with new detections.
 
         NOTE: The number of objects returned may differ from the number of detections provided.
+
+        Parameters:
+            dets (Iterable, optional): Array of detections in the format [[x1,y1,x2,y2,score],[x1,y1,x2,y2,score],...]
+        
+        Returns:
+            np.array: Returns the a similar array, where the last column is the object ID.
+        
+        Requires: 
+            Must be called once for each frame even with empty detections (use np.empty((0, 5)) for
+            frames without detections). 
         """
         if dets is None:
             dets = np.empty((0, 6))
@@ -307,7 +364,16 @@ class Sort(object):
 
 # Custom Class
 class SortFish:
-    def __init__(self, infile_dir, detections_file, tracks_file, base_name):
+    def __init__(self, infile_dir: str, detections_file: str, tracks_file: str, base_name: str) -> None:
+        """
+        Initializes the new SortFish class with specified attributes.
+
+        Parameters:
+            infile_dir (str): Directory containing input files.
+            detections_file (str): Path to output file for detections.
+            tracks_file (str): Path to output file for tracks.
+            base_name (str): Base name identifier for tracking session.
+        """
         self.infile_list = [infile_dir + x for x in os.listdir(infile_dir)]
         self.detections_file = detections_file
         self.tracks_file = tracks_file
@@ -317,10 +383,15 @@ class SortFish:
         self.tracks_fp.write('base_name,track_id,frame,xc,yc,w,h,class_id,u_dot,v_dot,s_dot,p_value\n')
         self.detections_fp.write('base_name,frame,x1,x2,y1,y2,p-value,class,tracked\n')
 
-    # Converts YOLO-formatted Object Detections to SORT-formatted Bounding Boxes
-    def yolodet_to_sortdet(self, det):
-        """converts a detection of the form [class, x_center, y_center, width, height, score] to the form
-        [x1, x2, y1, y2, score, class] 
+    def yolodet_to_sortdet(self, det: Iterable) -> np.array:
+        """
+        Converts YOLO-formatted Object Detections to SORT-formatted Bounding Boxes.
+
+        Parameters:
+            det (array-like) Object detections in YOLO format [class, x_center, y_center, width, height, score].
+
+        Returns:
+            np.array: Bounding Box in SORT format [x1, x2, y1, y2, score, class].
         """
         det = [float(d) for d in det]
         scaled_det = [det[0], det[1] * IMG_W, det[2] * IMG_H, det[3] * IMG_W, det[4] * IMG_H, det[5]]
@@ -331,17 +402,13 @@ class SortFish:
                          scaled_det[5], scaled_det[0]])
 
     # Writes Tracker Data to Output File
-    def update_outfile(self, trackers, frame):
+    def update_outfile(self, trackers: np.ndarray, frame: int) -> None:
         """
-        adds new rows to the output file
-        :param trackers: nx5 array, where n is equal to the number of active tracks. This object is returned by Sort.update
-        :type trackers: np.ndarray
-        :param yolodets: list of the original detections, in yolo format (class, xc, yc, w, h, score)
-        :type yolodets: list(list(float | int))
-        :param frame: current frame number
-        :type frame: int
-        :param file_obj: file object that we are writing to
-        :type file_obj: TextIOWrapper or equivalent open stream
+        Adds new rows to the output file
+
+        Parameters:
+            trackers (np.ndarray): nx5 array, where n is equal to the number of active tracks. This object is returned by Sort.update.
+            frame (int): current frame number
         """
         for t in trackers:
             xc = ((t[0] + t[2]) / 2) / IMG_W
@@ -354,9 +421,15 @@ class SortFish:
             track_id = t[9]
             print(f'{self.base_name}, {track_id}, {frame}, {xc}, {yc}, {w}, {h}, {class_id}, {u_dot}, {v_dot}, {s_dot}, {p_value}', file=self.tracks_fp)
 
-    # Run Sort and Process Frames, Saving Tracking and Detection Data
-    def run_sort(self, min_track_len=0, max_age=5, min_hits=3):
-     
+    def run_sort(self, min_track_len: int = 0, max_age: int = 5, min_hits: int = 3) -> None:
+        """
+        Run Sort and Process Frames, Saving Tracking and Detection Data
+
+        Parameters:
+            min_track_len (int, optional): Minimum lengths of tracks to keep.
+            max_age (int, optional): Maximum frames a tracker can be without updates.
+            min_hits (int, optional): Minimum number of hits before a track is confirmed.
+        """
         tracker = Sort(max_age=max_age, min_hits=min_hits)
         curr_frame = 0
 
@@ -407,7 +480,7 @@ class SortFish:
 
         df.to_csv(self.tracks_file)
 
-# Parses Command-Line Arguments for YOLOv5 Detection Tracking Script
+# Parses Command-Line Arguments for YOLOv5 Detection Tracking Script 
 parser = argparse.ArgumentParser(usage = 'This script will create fish tracks from YOLOV5 Detections')
 parser.add_argument('InfileDir', type = str, help = 'Directory containing YOLOV5 detections')
 parser.add_argument('DetectionsFile', type = str, help = 'Csv file of processed detections')

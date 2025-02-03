@@ -22,12 +22,12 @@ class FishTrackingPreparer():
     	videoIndex: Index of the video in the dataset.
 	"""
 
-	def __init__(self, fileManager, videoIndex):
+	def __init__(self, fileManager: object, videoIndex: int) -> None:
 		"""
 		Initializes the FishTrackingPreparer class with the file manager and video index.
 
 		Parameters:
-			fileManager (FileManager): An instance of the FileManager class.
+			fileManager (object): An instance of the FileManager class.
 			videoIndex (int): Index of the video in the dataset.
 		"""
 		self.__version__ = '1.0.0'
@@ -36,7 +36,7 @@ class FishTrackingPreparer():
 		self.videoIndex = videoIndex
 		self.fileManager.downloadData(self.fileManager.localYolov5WeightsFile)
 
-	def validateInputData(self):
+	def validateInputData(self) -> None:
 		"""
         Validates the existence of necessary input data files and directories.
         
@@ -50,7 +50,7 @@ class FishTrackingPreparer():
 		assert os.path.exists(self.fileManager.localLogfileDir)
 		assert os.path.exists(self.fileManager.localYolov5WeightsFile)
 
-	def runObjectDetectionAnalysis(self, gpu = 0):
+	def runObjectDetectionAnalysis(self, gpu: int = 0) -> subprocess.Popen:
 		"""
 		Runs the YOLOv5 object detection analysis on the specified video.
 
@@ -78,7 +78,7 @@ class FishTrackingPreparer():
 		#os.chdir(os.getenv('HOME') + '/CichlidBowerTracking/cichlid_bower_tracking')
 		return output
 
-	def runSORT(self):
+	def runSORT(self) -> subprocess.Popen:
 		"""
         Runs the SORT tracking algorithm on the YOLOv5 detection results.
 
@@ -97,4 +97,3 @@ class FishTrackingPreparer():
 
 		output = subprocess.Popen('bash -c \"' + command + '\"', shell = True, stderr = open(os.getenv('HOME') + '/' + self.videoObj.baseName + '_trackingerrors.txt', 'w'), stdout=subprocess.DEVNULL)
 		return output
-	

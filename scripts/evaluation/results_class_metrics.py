@@ -9,6 +9,7 @@ The following script was used to calculate various metrics used in the results.
 # -*- coding: utf-8 -*-
 
 # Imports
+from typing import Iterable
 import numpy as np
 
 # Metrics Calculation
@@ -44,7 +45,7 @@ class Metrics:
         metrics = Metrics(label, predict)
         print("True Positives:", metrics.tp)
     """
-    def __init__(self, label, predict):
+    def __init__(self, label: Iterable, predict: Iterable) -> None:
         """
         Initialize the Metrics class with ground truth labels and predictions.
 

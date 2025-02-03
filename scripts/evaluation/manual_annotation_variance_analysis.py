@@ -10,6 +10,7 @@ metrics and then visualized to identify differences.
 # -*- coding: utf-8 -*-
 
 # Imports
+from typing import List, Iterable
 import pycoral.adapters.detect as pc
 import fiftyone as fo
 import os
@@ -32,8 +33,18 @@ annotator2='Annotator2'
 text1 = glob.glob(root_1+labels_start+'*.txt')
 text2= glob.glob(root_2+labels_start+'*.txt')
 
-# Transform Bounding Box Coords from Yolo Format to Calculation Format
-def convert(yolo_list, flag='off'):
+def convert(yolo_list: List, flag: str = 'off') -> List:
+    """
+    Transform Bounding Box Coords from Yolo Format to Calculation Format
+
+    Parameters:
+        yolo_list (List): Bounding box coordinates in YOLO format
+        flag (str): Flag determining if first two indices are kept the same.
+    
+    Returns:
+        List: Bounding box coordinates in Calculation format
+    """
+
     x1=yolo_list[0]-(yolo_list[2]/2)
     y1=yolo_list[1]-(yolo_list[3]/2)
     x2=yolo_list[0]+(yolo_list[2]/2)
@@ -45,8 +56,18 @@ def convert(yolo_list, flag='off'):
         y2=yolo_list[1]+(yolo_list[3])
     return [x1,y1,x2,y2]
 
-# Find and Remove Inconsisten Bounding Box Annotations
-def find_bad(location, label, bbox):
+def find_bad(location: List[List], label: List[List], bbox: Iterable) -> tuple:
+    """
+    Find and Remove Inconsisten Bounding Box Annotations
+
+    Parameters:
+        location (list of lists): List of lists of bounding box coordinates
+        label (list of lists): List of lists of class labels for bounding boxes
+        bbox (array-like): Bounding box to compare against others.
+    
+    Returns:
+        tuple: Tuple containing locations and labels where bad annotations are removed.
+    """
     bbox=convert(bbox, flag='on')
     bad_box=pc.BBox(bbox[0], bbox[1], bbox[2], bbox[3])
     iou_map=[]
@@ -67,8 +88,18 @@ def find_bad(location, label, bbox):
         pdb.set_trace()
     return location, label
 
-# Adjust Bounding Box Annotations
-def crop_annotation(location, label, imageid):
+def crop_annotation(location: List[List], label: List[List], imageid: str) -> tuple:
+    """
+    Adjust Bounding Box Annotations
+
+    Parameters:
+        location (list of lists): List of lists of bounding box coordinates
+        label (list of lists): List of lists of class labels.
+        imageid (str): Unique image identifier. 
+    
+    Returns:
+        tuple: Contains the adjusted bounding box location and label.
+    """
     dataset = fo.load_dataset("master_dataset")
     sub_ds=dataset.match(F('image_uid').ends_with(imageid))
     for sample in sub_ds:
@@ -81,8 +112,18 @@ def crop_annotation(location, label, imageid):
                 new_location=location
     return new_location, label
 
-# Align and Match Bounding Boxes of the Two Annotators Based on IoU Scores
-def iou_mapping(location,label):
+def iou_mapping(location: List[List], label: List[List]) -> tuple:
+    """
+    Align and Match Bounding Boxes of the Two Annotators Based on IoU Scores
+
+    Parameters:
+        location (list of list of floats): Contains data representing bounding boxes 
+        label (list of lists): Contains labels for bounding boxes
+    
+    Returns:
+        tuple: Contains the aligned/matched bounding boxes, and laebls for the bounding boxes
+    """
+
     a=location[0]
     b=location[1]
     print(3)
@@ -112,8 +153,17 @@ def iou_mapping(location,label):
     else:
         pdb.set_trace()
 
-# Load and Process Annotation Data from Files
-def associate_files(paths, uid):
+def associate_files(paths: List[str], uid: str) -> List:
+    """
+    Load and Process Annotation Data from Files
+
+    Parameters:
+        paths (List[str]): List of file paths with annotation data.
+        uid (str): Unique identifier used for further processing
+    
+    Returns:
+        List: Processed labels from inputted files.
+    """
     label=[]
     location=[]
     for i in paths:
@@ -351,4 +401,3 @@ for i in range(len(df.trial.copy())):
         include_trial.append(list(df.trial)[i])
         if mcgrath_score[i]<3:
             print(list(df.trial)[i])
-            

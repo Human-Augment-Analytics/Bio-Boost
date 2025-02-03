@@ -19,13 +19,23 @@ class ClusterTrackAssociationPreparer():
 	3. Automatically identifies bower location
 	4. Analyze building, shape, and other pertinent info of the bower
 	"""
-	def __init__(self, fileManager):
+	def __init__(self, fileManager: object) -> None:
+		"""
+		Initializes the ClusterTrackAssociationPreparer class
+
+		Parameters:
+			fileManager (object): Object that manages files related to input data
+		"""
+
 		self.__version__ = '1.0.0'
 		self.fileManager = fileManager
 		self.validateInputData()
 
-	# Check for Required Files
-	def validateInputData(self):
+	def validateInputData(self) -> None:
+		"""
+		Check for Required Files
+		"""
+
 		assert os.path.exists(self.fileManager.localLogfileDir)
 		assert os.path.exists(self.fileManager.localOldVideoCropFile)
 		assert os.path.exists(self.fileManager.localAllLabeledClustersFile)
@@ -36,8 +46,13 @@ class ClusterTrackAssociationPreparer():
 			assert os.path.exists(videoObj.localFishTracksFile)
 			assert os.path.exists(videoObj.localFishDetectionsFile)
 
-	# Combine Detection and Tracking Data into One DF
-	def summarizeTracks(self, minimum_frame_number = 30):
+	def summarizeTracks(self, minimum_frame_number: int = 30) -> None:
+		"""
+		Combine Detection and Tracking Data into One DF
+
+		Parameters:
+			minimum_frame_number (int, optional): Minimum number of frames for track to be used.
+		"""
 
 		# Loop through videos and combine into a single file
 		for videoIndex in range(len(self.fileManager.lp.movies)):
@@ -76,8 +91,11 @@ class ClusterTrackAssociationPreparer():
 		t_dt = dt_t.groupby(['track_id', 'track_length', 'base_name']).mean()[['class_id', 'p_value','InBounds']].rename({'class_id':'Reflection'}, axis = 1).reset_index().sort_values(['base_name','track_id'])
 		t_dt.to_csv(self.fileManager.localAllTracksSummaryFile, index = False)
 
-	# Assign IDs to Labeled Clusters
-	def associateClustersWithTracks(self):
+	def associateClustersWithTracks(self) -> None:
+		"""
+		Assign IDs to Labeled Clusters
+		"""
+
 		c_dt = pd.read_csv(self.fileManager.localAllLabeledClustersFile, index_col = 0)
 		c_dt['track_id'] = ''
 		t_dt = pd.read_csv(self.fileManager.localAllFishTracksFile, index_col = 0, dtype={'base_name':'category'})
@@ -97,8 +115,15 @@ class ClusterTrackAssociationPreparer():
 		
 		pdb.set_trace()
 
-	# Generate and Save Annotated Video Clips of Specific Tracks
-	def createMaleFemaleAnnotationVideos(self, n_videos = 25, delta_xy = 75):
+	def createMaleFemaleAnnotationVideos(self, n_videos: int = 25, delta_xy: int = 75) -> None:
+		"""
+		Generate and Save Annotated Video Clips of Specific Tracks
+
+		Parameters:
+			n_videos (int, optional): Number of annotated video clips to generate.
+			delta_xy (int, optional): Size of the bounding box around the fish track in video frames.
+		"""
+
 		caps = {}
 		for videoIndex in range(len(self.fileManager.lp.movies)):
 			videoObj = self.fileManager.returnVideoObject(videoIndex)

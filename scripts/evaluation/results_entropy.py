@@ -9,12 +9,13 @@ The following script was used to calculate entropy for the results.
 # -*- coding: utf-8 -*-
 
 # Imports
+from typing import Iterable
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
 # Entropy Calculation
-def entropy(predict, base=2):
+def entropy(predict: Iterable, base: int = 2) -> float:
     """
     Calculate the entropy of a prediction array.
 
@@ -68,9 +69,10 @@ acc2_1=[]
 acc2_2=[]
 acc2_3=[]
 
-# Calculate Accuracy using MCC
-def get_acc(df, label, predict):
+def get_acc(df: pd.DataFrame, label: str, predict: str) -> float:
     """
+    Calculate Accuracy using MCC.
+
     Parameters:
         df (pd.DataFrame): DataFrame containing label and prediction columns.
         label (str): Column name of the ground truth labels.

@@ -7,6 +7,19 @@ from cv_bridge import CvBridge
 import argparse
 
 def extract_video_from_bag(bag_file: str, output_dir: str, fps: int, remove: bool) -> None:
+    """
+    Extracts video from a bag file and saves it as an MP4V file
+
+    Parameters:
+        bag_file (str): Path to the bag file.
+        output_dir (str): Directory where the extracted video will be saved.
+        fps (int): Frames per second of the outputted video.
+        remove (bool): Flag for deleting original bag file.
+    
+    Returns:
+        None
+    """
+
     # Initialize CvBridge
     bridge = CvBridge()
 
