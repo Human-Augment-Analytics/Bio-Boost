@@ -6,6 +6,15 @@ Object detection has numerous applications, from animal tracking to autonomous v
 ## Experimental Setup
 ![](https://github.com/Human-Augment-Analytics/Bio-Boost/blob/main/imgs/setup.PNG)
 
+## Variance Challenges
+![](https://github.com/Human-Augment-Analytics/Bio-Boost/blob/main/imgs/variance.PNG)
+
+## Models Used
+![](https://github.com/Human-Augment-Analytics/Bio-Boost/blob/main/imgs/models.PNG)
+
+## Temporal Model Decision Tree
+![](https://github.com/Human-Augment-Analytics/Bio-Boost/blob/main/imgs/tree_viz_1.PNG)
+
 ## Usage
 ### Object Detection and Preprocessing
 **The following scripts are responsible for preprocessing the video data and running object detection on the footage.**  
@@ -44,11 +53,3 @@ Object detection has numerous applications, from animal tracking to autonomous v
 - **results_entropy.py**: Calculates entropy for groups, and calculates accuracy for each percentile. 
     - **Invoke**: `python3 results_entropy.py`
 
-## Variance Challenges
-![](https://github.com/Human-Augment-Analytics/Bio-Boost/blob/main/imgs/variance.PNG)
-
-## Models Used
-![](https://github.com/Human-Augment-Analytics/Bio-Boost/blob/main/imgs/models.PNG)
-
-## Temporal Model Decision Tree
-![](https://github.com/Human-Augment-Analytics/Bio-Boost/blob/main/imgs/tree_viz_1.PNG)

@@ -24,14 +24,29 @@ for BAG_FILE in "$1/todo/*.bag"; do
     rosrun image_view extract_images image:=$TOPIC _filename_format:="$1/done/frames/${FILE_NAME}_frame%04d.jpg" & ROSRUN_PID=$!
 
     # play the .bag file
-    rosbag play "$BAG_FILE"
+    rosbag play --clock --rate=1.0 "$BAG_FILE" # FIX Attempt 1: Play the .bag file with forced rate and clock sync to ensure consistent timing
+
+    sleep 1 # FIX Attempt 2: Add short delay for images to be written 
 
     # once done playing .bag file, terminate rosrun
     kill $ROSRUN_PID
     wait $ROSRUN_PID 2>/dev/null
 
     # save frames as .mp4 video with ffmpeg
-    ffmpeg -framerate 15 -i "$1/done/frames/${FILE_NAME}_frame%04d.jpg" -c:v libx264 -pix_fmt yuv420p "$1/done/videos/${FILE_NAME}.mp4"
+
+    # Old: Sampling at forced 15 fps
+    # ffmpeg -framerate 15 -i "$1/done/frames/${FILE_NAME}_frame%04d.jpg" -c:v libx264 -pix_fmt yuv420p "$1/done/videos/${FILE_NAME}.mp4"
+
+    # New Attempt 1: Pair -framerate with -vsync vfr which adjusts frame rate based on time intervals (records at variable rate essentially)
+    # Note: Not super optimistic about this one because the ChatGPT analysis told us that the timestamps seemed inconsistent 
+    ffmpeg -framerate 15 -i "$1/done/frames/${FILE_NAME}_frame%04d.jpg" -vsync vfr -c:v libx264 -pix_fmt yuv420p "$1/done/videos/${FILE_NAME}.mp4" 
+
+    # New Attempt 2: Use filter to resample video stream at a constant 15 fps
+    # ffmpeg -framerate 15 -i "$1/done/frames/${FILE_NAME}_frame%04d.jpg" -filter:v "fps=fps=15" -c:v libx264 -pix_fmt yuv420p "$1/done/videos/${FILE_NAME}.mp4"
+
+    # New Attempt 3: Drop the forced framerate from 15 to 10
+    # ffmpeg -r 10 -i "$1/done/frames/${FILE_NAME}_frame%04d.jpg" -c:v libx264 -pix_fmt yuv420p "$1/done/videos/${FILE_NAME}.mp4"
+
 
     echo "Saved $1/done/videos/${FILE_NAME}.mp4"
 done
