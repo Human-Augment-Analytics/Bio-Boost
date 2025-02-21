@@ -91,7 +91,7 @@ class TanhTemporalNet(nn.Module):
         self.__version__ = '0.0.1'
 
         self.model = TemporalNet(input_size, output_size, hidden_sizes)
-        self.tanh = nn.Sigmoid()
+        self.tanh = nn.Tanh()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         '''
