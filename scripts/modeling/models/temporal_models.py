@@ -14,13 +14,13 @@ class TemporalNet(nn.Module):
             hidden_sizes: a list of sizes for the intermediate hidden layers.
         '''
 
-        super().__init__(self)
+        super(TemporalNet, self).__init__()
         self.__version__ = '0.0.1'
 
         self.input_size = input_size
         self.output_size = output_size
 
-        self.layers = []
+        self.layers = nn.ModuleList()
 
         self.layers.append(nn.Linear(input_size, hidden_sizes[0]))
         for i in range(1, len(hidden_sizes)):
@@ -38,7 +38,7 @@ class TemporalNet(nn.Module):
             x: a Tensor containing the output of the final linear activation layer, after running the input x through the entire model.
         '''
 
-        for layer in layers:
+        for layer in self.layers:
             x = layer(x)
 
         return x
@@ -54,7 +54,7 @@ class SigmoidTemporalNet(nn.Module):
             hidden_sizes: a list of sizes for the intermediate hidden layers.
         '''
 
-        super().__init__(self)
+        super(SigmoidTemporalNet, self).__init__()
         self.__version__ = '0.0.1'
 
         self.model = TemporalNet(input_size, output_size, hidden_sizes)
@@ -87,7 +87,7 @@ class TanhTemporalNet(nn.Module):
             hidden_sizes: a list of sizes for the intermediate hidden layers.
         '''
 
-        super().__init__(self)
+        super(TanhTemporalNet, self).__init__()
         self.__version__ = '0.0.1'
 
         self.model = TemporalNet(input_size, output_size, hidden_sizes)
@@ -120,7 +120,7 @@ class ReluTemporalNet(nn.Module):
             hidden_sizes: a list of sizes for the intermediate hidden layers.
         '''
 
-        super().__init__(self)
+        super(ReluTemporalNet, self).__init__()
         self.__version__ = '0.0.1'
 
         self.model = TemporalNet(input_size, output_size, hidden_sizes)
