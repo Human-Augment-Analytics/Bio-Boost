@@ -20,7 +20,7 @@ class TemporalNet(nn.Module):
         self.input_size = input_size
         self.output_size = output_size
 
-        self.layers = []
+        self.layers = nn.ModuleList()
 
         self.layers.append(nn.Linear(input_size, hidden_sizes[0]))
         for i in range(1, len(hidden_sizes)):
@@ -38,7 +38,7 @@ class TemporalNet(nn.Module):
             x: a Tensor containing the output of the final linear activation layer, after running the input x through the entire model.
         '''
 
-        for layer in layers:
+        for layer in self.layers:
             x = layer(x)
 
         return x

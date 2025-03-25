@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch
 
 class TemporalNet(nn.Module):
-    def __init__(self, input_size: int, output_size: int, hidden_sizes: List[int]):
+    def __init__(self, input_size: int, output_size: int, hidden_sizes: List[int], dropout: float = 0.3):
         '''
         A simple MLP stack to serve as a starting point for our post-processing temporal network.
 
@@ -19,13 +19,28 @@ class TemporalNet(nn.Module):
 
         self.input_size = input_size
         self.output_size = output_size
+        self.hidden_sizes = hidden_sizes
 
-        self.layers = nn.ModuleList()
+        self.dropout = dropout
 
-        self.layers.append(nn.Linear(input_size, hidden_sizes[0]))
-        for i in range(1, len(hidden_sizes)):
-            self.layers.append(nn.Linear(hidden_sizes[i - 1], hidden_sizes[i]))
-        self.layers.append(nn.Linear(hidden_sizes[-1], output_size))
+        layers = []
+        prev_dim = input_size
+
+        for idx, hidden_dim in enumerate(hidden_sizes):
+            layers += [
+                nn.Linear(prev_dim, hidden_dim),
+                nn.BatchNorm1d(hidden_dim),
+                nn.ReLU()
+            ]
+
+            if idx == len(hidden_sizes):
+                layers.append(nn.Dropout(p=dropout))
+
+        layers.append(nn.Linear(prev_dim, output_size))
+
+        self.layers = nn.Sequential(*layers)
+
+
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         '''
