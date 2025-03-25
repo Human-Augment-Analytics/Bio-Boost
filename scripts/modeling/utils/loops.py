@@ -192,9 +192,10 @@ def evaluate_tnet(dataloader, yolo, tnet, loss_fn):
 
     Returns:
         Average loss, computed across all batches.
-        Average accuracy, computed across all batches.
-        Average accuracy for true male instances, computed across all batches.
-        Average accuracy for true female instances, computed across all batches.
+        Average overall accuracy, computed across all batches.
+        Average accuracies for male and female classes, computed across all batches.
+        Average recall for male and female classes, computed across all batches.
+        Average precision for male and female classes, computed across all batches.
     '''
 
     total_loss = 0
@@ -506,9 +507,10 @@ def evaluate_head(dataloader, yolo, tnet, head, loss_fn):
 
     Returns:
         Average loss, computed across all batches.
-        Average accuracy, computed across all batches.
-        Average accuracy for true male instances, computed across all batches.
-        Average accuracy for true female instances, computed across all batches.
+        Average overall accuracy, computed across all batches.
+        Average accuracies for male and female classes, computed across all batches.
+        Average recall for male and female classes, computed across all batches.
+        Average precision for male and female classes, computed across all batches.
     '''
 
     total_loss = 0
