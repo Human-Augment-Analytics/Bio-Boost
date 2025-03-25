@@ -206,6 +206,14 @@ def evaluate_tnet(dataloader, yolo, tnet, loss_fn):
     
     total_females_correct = 0
     total_female_samples = 0
+
+    total_male_tp = 0
+    total_male_fp = 0
+    total_male_fn = 0
+
+    total_female_tp = 0
+    total_female_fp = 0
+    total_female_fn = 0
     
     num_batches = len(dataloader)
     valid_loop = tqdm(dataloader, total=num_batches)
@@ -247,6 +255,22 @@ def evaluate_tnet(dataloader, yolo, tnet, loss_fn):
             total_females_correct += num_correct_females
             total_female_samples += num_females
 
+            male_tp = (is_male & preds).sum().item()
+            male_fp = (is_female & preds).sum().item()
+            male_fn = (is_male & inv_preds).sum().item()
+
+            female_tp = (is_female & inv_preds).sum().item()
+            female_fp = (is_male & inv_preds).sum().item()
+            female_fn = (is_female & preds).sum().item()
+
+            total_male_tp += male_tp
+            total_male_fp += male_fp
+            total_male_fn += male_fn
+
+            total_female_tp += female_tp
+            total_female_fp += female_fp
+            total_female_fn += female_fn
+
             # compute loss, backward pass
             batch_loss = loss_fn(probs, is_male)
 
@@ -262,11 +286,17 @@ def evaluate_tnet(dataloader, yolo, tnet, loss_fn):
             avg_male_acc = total_males_correct / total_male_samples
             avg_female_acc = total_females_correct / total_female_samples
 
+            avg_male_precision = total_male_tp / (total_male_tp + total_male_fp)
+            avg_male_recall = total_male_tp / (total_male_tp + total_male_fn)
+
+            avg_female_precision = total_female_tp / (total_female_tp + total_female_fp)
+            avg_female_recall = total_female_tp / (total_female_tp + total_female_fn)
+
             valid_loop.set_description(f'Batch [{batch + 1}/{num_batches}]')
             valid_loop.set_postfix({'Loss': f'{batch_loss:.4f} [{avg_loss:.4f}]',
                              'Acc': f'{(batch_acc * 100):.2f}% [{(avg_acc * 100):.2f}%]'})
         
-    return avg_loss.cpu().item(), avg_acc, avg_male_acc, avg_female_acc
+    return avg_loss.cpu().item(), avg_acc, avg_male_acc, avg_female_acc, avg_male_precision, avg_male_recall, avg_female_precision, avg_female_recall
 
 # YOLO11 + TemporalNet + Classification head training/validation/evaluation loops...
 
@@ -490,6 +520,14 @@ def evaluate_head(dataloader, yolo, tnet, head, loss_fn):
     
     total_females_correct = 0
     total_female_samples = 0
+
+    total_male_tp = 0
+    total_male_fp = 0
+    total_male_fn = 0
+
+    total_female_tp = 0
+    total_female_fp = 0
+    total_female_fn = 0
     
     num_batches = len(dataloader)
     valid_loop = tqdm(dataloader, total=num_batches)
@@ -538,6 +576,22 @@ def evaluate_head(dataloader, yolo, tnet, head, loss_fn):
             total_females_correct += num_correct_females
             total_female_samples += num_females
 
+            male_tp = (is_male & preds).sum().item()
+            male_fp = (is_female & preds).sum().item()
+            male_fn = (is_male & inv_preds).sum().item()
+
+            female_tp = (is_female & inv_preds).sum().item()
+            female_fp = (is_male & inv_preds).sum().item()
+            female_fn = (is_female & preds).sum().item()
+
+            total_male_tp += male_tp
+            total_male_fp += male_fp
+            total_male_fn += male_fn
+
+            total_female_tp += female_tp
+            total_female_fp += female_fp
+            total_female_fn += female_fn
+
             # compute loss, backward pass
             batch_loss = loss_fn(probs, is_male)
 
@@ -553,8 +607,14 @@ def evaluate_head(dataloader, yolo, tnet, head, loss_fn):
             avg_male_acc = total_males_correct / total_male_samples
             avg_female_acc = total_females_correct / total_female_samples
 
+            avg_male_precision = total_male_tp / (total_male_tp + total_male_fp)
+            avg_male_recall = total_male_tp / (total_male_tp + total_male_fn)
+
+            avg_female_precision = total_female_tp / (total_female_tp + total_female_fp)
+            avg_female_recall = total_female_tp / (total_female_tp + total_female_fn)
+
             valid_loop.set_description(f'Batch [{batch + 1}/{num_batches}]')
             valid_loop.set_postfix({'Loss': f'{batch_loss:.4f} [{avg_loss:.4f}]',
                              'Acc': f'{(batch_acc * 100):.2f}% [{(avg_acc * 100):.2f}%]'})
         
-    return avg_loss.cpu().item(), avg_acc, avg_male_acc, avg_female_acc
+    return avg_loss.cpu().item(), avg_acc, avg_male_acc, avg_female_acc, avg_male_precision, avg_male_recall, avg_female_precision, avg_female_recall
