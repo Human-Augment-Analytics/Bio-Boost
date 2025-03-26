@@ -3,7 +3,6 @@ from typing import List
 import torch
 import torch.nn as nn
 
-
 import pandas as pd
 import torch.nn.functional as F
 import torch.optim as optim
@@ -35,12 +34,12 @@ class TemporalNet(nn.Module):
 
         for idx, hidden_dim in enumerate(hidden_sizes):
             layers += [
-                nn.Linear(prev_dim, hidden_dim),
-                nn.BatchNorm1d(hidden_dim),
-                nn.Tanh()
+                nn.Linear(prev_dim, hidden_dim * 2),
+                nn.BatchNorm1d(hidden_dim * 2),
+                nn.GLU(dim=1)
             ]
 
-            if idx == len(hidden_sizes):
+            if idx == len(hidden_sizes) - 1:
                 layers.append(nn.Dropout(p=dropout))
 
             prev_dim = hidden_dim
@@ -61,7 +60,10 @@ class TemporalNet(nn.Module):
         '''
 
         for layer in self.layers:
+            # residual = x[:]
             x = layer(x)
+
+            # x = residual + x if residual.shape == x.shape else x
 
         return x
 
@@ -91,7 +93,7 @@ X_val = scaler.transform(X_val)
 test_features = scaler.transform(test_features)
 
 # Recreating Charlie's initial model
-model = TemporalNet(input_size=4, output_size=2, hidden_sizes=[64, 32, 16])
+model = TemporalNet(input_size=4, output_size=2, hidden_sizes=[128, 64], dropout=0.5)
 
 
 # Convert data to PyTorch tensors
@@ -113,10 +115,10 @@ test_loader = DataLoader(test_dataset, batch_size=batch_size)
 
 # Define loss and optimizer
 criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(model.parameters(), lr=0.001, weight_decay=1e-5)
+optimizer = optim.Adam(model.parameters(), lr=0.0001, weight_decay=1e-5)
 
 # Training
-for epoch in range(20):
+for epoch in range(30):
     model.train()
     running_loss = 0.0
     for inputs, labels in train_loader:
