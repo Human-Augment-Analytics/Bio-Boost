@@ -327,7 +327,7 @@ def evaluate_tnet(dataloader, yolo, tnet, loss_fn):
             eval_results['prob_class0'] += probs[:, 0].squeeze().tolist()
             eval_results['prob_class1'] += probs[:, 1].squeeze().tolist()
             eval_results['predicted_class'] += preds.squeeze().tolist()
-            eval_results['true_class'] += ismale.squeeze().tolist()
+            eval_results['true_class'] += is_male.squeeze().tolist()
             eval_results['filename'] += list(img)
 
             # metric tracking
