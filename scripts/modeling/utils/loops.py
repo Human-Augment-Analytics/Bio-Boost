@@ -298,6 +298,14 @@ def evaluate_tnet(dataloader, yolo, tnet, loss_fn):
     
     num_batches = len(dataloader)
     valid_loop = tqdm(dataloader, total=num_batches)
+
+    eval_results = {
+        'prob_class0': [],
+        'prob_class1': [],
+        'predicted_class': [],
+        'true_class': [],
+        'filename': []
+    }
     
     tnet.eval()
     yolo.eval()
@@ -315,6 +323,14 @@ def evaluate_tnet(dataloader, yolo, tnet, loss_fn):
             probs = logits.softmax(1)
             preds = probs.argmax(1)
 
+            # save records
+            eval_results['prob_class0'] += probs[:, 0].squeeze().tolist()
+            eval_results['prob_class1'] += probs[:, 1].squeeze().tolist()
+            eval_results['predicted_class'] += preds.squeeze().tolist()
+            eval_results['true_class'] += is_male.squeeze().tolist()
+            eval_results['filename'] += list(img)
+
+            # metric tracking
             num_samples = temp_features.shape[0]
             num_correct = (preds == is_male).sum().item()
 
@@ -377,7 +393,7 @@ def evaluate_tnet(dataloader, yolo, tnet, loss_fn):
             valid_loop.set_postfix({'Loss': f'{batch_loss:.4f} [{avg_loss:.4f}]',
                              'Acc': f'{(batch_acc * 100):.2f}% [{(avg_acc * 100):.2f}%]'})
         
-    return avg_loss.cpu().item(), avg_acc, avg_male_acc, avg_female_acc, avg_male_precision, avg_male_recall, avg_female_precision, avg_female_recall
+    return eval_results, avg_loss.cpu().item(), avg_acc, avg_male_acc, avg_female_acc, avg_male_precision, avg_male_recall, avg_female_precision, avg_female_recall
 
 # YOLO11 + TemporalNet + Classification head training/validation/evaluation loops...
 
