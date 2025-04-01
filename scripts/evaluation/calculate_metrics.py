@@ -3,7 +3,7 @@ import argparse, os, sys, math
 
 from typing import Tuple
 
-"""
+
 parser = argparse.ArgumentParser()
 
 parser.add_argument('results_fp', type=str, help='The filepath to the results CSV file to use in calculations.')
@@ -18,22 +18,21 @@ parser.add_argument('--tracks', action='store_true', help='Boolean flag to calcu
 parser.add_argument('--experiments', action='store_true', help='Boolean flag to calculate per-experiment metrics.')
 
 args = parser.parse_args()
-"""
 
 # Hardcoded: Change per CSV
-results_fp = "data/yolov11_testing.csv"
-save_fp = "output/yolov11_testing.csv"
-data_type = 1
+results_fp = args.results_fp # "data/yolov11_testing.csv"
+save_fp = args.save_fp # "output/yolov11_testing.csv"
+data_type = args.data_type # 1
 
 # Hardcoded: Change per CSV
-predictions_colname = "prediction"
-true_labels_colname = "ground_truth"
-file_colname = "filename"
+predictions_colname = args.predictions_colname # "prediction"
+true_labels_colname = args.true_labels_colname # "ground_truth"
+file_colname = args.file_colname # "filename"
 
 # Hardcoded: Change per CSV
-filepaths = False
-tracks = False
-experiments = True
+filepaths = args.filepaths # False
+tracks = args.tracks # False
+experiments = args.experiments # True
 
 if not os.path.exists(results_fp):
     print(f'Invalid Input: No file found at path {results_fp}!')
@@ -90,12 +89,12 @@ def compute_entropy(track_df: pd.DataFrame) -> float:
 
     track_length = track_df.shape[0]
 
-    cls0_prob = cls0_count / track_length
-    cls1_prob = cls1_count / track_length
+    cls0_prob = cls0_count / track_length if cls0_count > 0 else 1e-6
+    cls1_prob = cls1_count / track_length if cls1_count > 0 else 1e-6
 
     cls0_logprob = math.log(cls0_prob)
     cls1_logprob = math.log(cls1_prob)
-
+    
     entropy = -(cls0_prob * cls0_logprob + cls1_prob * cls1_logprob)
 
     return entropy
@@ -110,7 +109,8 @@ all_record = [all_rowname, all_overall_acc, all_cls0_acc, all_cls1_acc, all_cls0
 data.append(all_record)
 
 if experiments:
-    all_df['experiment'] = all_df[file_colname].apply(lambda x: x.strip('__')[0])
+    all_df['experiment'] = all_df[file_colname].apply(lambda x: x.split('__')[0])
+    # print(all_df['experiment'].iloc[0])
 
     exp_names = all_df['experiment'].unique()
     for exp_name in exp_names:
@@ -124,8 +124,8 @@ if experiments:
         data.append(exp_record)
 
 if tracks:
-    all_df['track'] = all_df[file_colname].apply(lambda x: '__'.join(x.strip('__')[:-1]) if data_type == 0
-                                                 else '_'.join(x.strip('_')[:-1]))
+    all_df['track'] = all_df[file_colname].apply(lambda x: '__'.join(x.split('__')[:-1]) if data_type == 0
+                                                 else '_'.join(x.split('_')[:-1]))
     
     trk_names = all_df['track'].unique()
     for trk_name in trk_names:
