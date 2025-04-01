@@ -89,11 +89,11 @@ def compute_entropy(track_df: pd.DataFrame) -> float:
 
     track_length = track_df.shape[0]
 
-    cls0_prob = cls0_count / track_length if cls0_count > 0 else 1e-6
-    cls1_prob = cls1_count / track_length if cls1_count > 0 else 1e-6
+    cls0_prob = cls0_count / track_length
+    cls1_prob = cls1_count / track_length
 
-    cls0_logprob = math.log(cls0_prob)
-    cls1_logprob = math.log(cls1_prob)
+    cls0_logprob = math.log(cls0_prob) if cls0_prob > 0.0 else -float('inf')
+    cls1_logprob = math.log(cls1_prob) if cls1_prob > 0.0 else -float('inf')
     
     entropy = -(cls0_prob * cls0_logprob + cls1_prob * cls1_logprob)
 
