@@ -3,6 +3,7 @@ import argparse, os, sys, math
 
 from typing import Tuple
 
+
 parser = argparse.ArgumentParser()
 
 parser.add_argument('results_fp', type=str, help='The filepath to the results CSV file to use in calculations.')
@@ -18,17 +19,20 @@ parser.add_argument('--experiments', action='store_true', help='Boolean flag to 
 
 args = parser.parse_args()
 
-results_fp = args.results_fp
-save_fp = args.save_fp
-data_type = args.data_type
+# Hardcoded: Change per CSV
+results_fp = args.results_fp # "data/yolov11_testing.csv"
+save_fp = args.save_fp # "output/yolov11_testing.csv"
+data_type = args.data_type # 1
 
-predictions_colname = args.predictions_colname
-true_labels_colname = args.true_labels_colname
-file_colname = args.file_colname
+# Hardcoded: Change per CSV
+predictions_colname = args.predictions_colname # "prediction"
+true_labels_colname = args.true_labels_colname # "ground_truth"
+file_colname = args.file_colname # "filename"
 
-filepaths = args.filepaths
-tracks = args.tracks
-experiments = args.experiments
+# Hardcoded: Change per CSV
+filepaths = args.filepaths # False
+tracks = args.tracks # False
+experiments = args.experiments # True
 
 if not os.path.exists(results_fp):
     print(f'Invalid Input: No file found at path {results_fp}!')
@@ -39,23 +43,24 @@ all_df = pd.read_csv(results_fp)
 if filepaths:
     all_df[file_colname] = all_df[file_colname].apply(lambda x: x.split('/')[-1])
 
-# define functions
-
 def compute_accuracies(df: pd.DataFrame) -> Tuple[float, float, float]:
-    total_num_correct = df[df[predictions_colname] == df[true_labels_colname]].shape[0]
+    # Create boolean Series tracking correctness
+    total_num_correct = (df[predictions_colname] == df[true_labels_colname]).sum()
     total_num_samples = df.shape[0]
-
     overall_acc = total_num_correct / total_num_samples
 
-    cls0_num_correct = df[(df[df[predictions_colname] == df[true_labels_colname]]) & (df[true_labels_colname] == 0)].shape[0]
-    cls0_num_samples = df[df[true_labels_colname] == 0].shape[0]
+    # Use boolean masks for class 0 and class 1 labels
+    cls0_mask = df[true_labels_colname] == 0
+    cls1_mask = df[true_labels_colname] == 1
 
-    cls0_acc = cls0_num_correct / cls0_num_samples
+    # Compute class accuracies 
+    cls0_num_correct = ((df[predictions_colname] == df[true_labels_colname]) & cls0_mask).sum()
+    cls0_num_samples = cls0_mask.sum()
+    cls0_acc = cls0_num_correct / cls0_num_samples if cls0_num_samples > 0 else 0.0
 
-    cls1_num_correct = df[(df[df[predictions_colname] == df[true_labels_colname]]) & (df[true_labels_colname] == 1)].shape[0]
-    cls1_num_samples = df[df[true_labels_colname] == 1].shape[0]
-
-    cls1_acc = cls1_num_correct / cls1_num_samples
+    cls1_num_correct = ((df[predictions_colname] == df[true_labels_colname]) & cls1_mask).sum()
+    cls1_num_samples = cls1_mask.sum()
+    cls1_acc = cls1_num_correct / cls1_num_samples if cls1_num_samples > 0 else 0.0
 
     return overall_acc, cls0_acc, cls1_acc
 
@@ -64,15 +69,17 @@ def compute_precisions_and_recalls(df: pd.DataFrame) -> Tuple[float, float, floa
     cls0_fp = df[((df[predictions_colname] == 0) & (df[true_labels_colname] == 1))].shape[0]
     cls0_fn = df[((df[predictions_colname] == 1) & (df[true_labels_colname] == 0))].shape[0]
 
-    cls0_prec = cls0_tp / (cls0_tp + cls0_fp)
-    cls0_rec = cls0_tp / (cls0_tp + cls0_fn)
+    # FIXME: If zero set to 1?
+    cls0_prec = cls0_tp / (cls0_tp + cls0_fp) if (cls0_tp + cls0_fp) > 0 else 1.0
+    cls0_rec = cls0_tp / (cls0_tp + cls0_fn) if (cls0_tp + cls0_fn) > 0 else 1.0
 
     cls1_tp = df[(df[predictions_colname] == 1) & (df[true_labels_colname] == 1)].shape[0]
     cls1_fp = df[((df[predictions_colname] == 1) & (df[true_labels_colname] == 0))].shape[0]
     cls1_fn = df[((df[predictions_colname] == 0) & (df[true_labels_colname] == 1))].shape[0]
 
-    cls1_prec = cls1_tp / (cls1_tp + cls1_fp)
-    cls1_rec = cls1_tp / (cls1_tp + cls1_fn)
+    # FIXME: See above comment
+    cls1_prec = cls1_tp / (cls1_tp + cls1_fp) if (cls1_tp + cls1_fp) > 0 else 1.0
+    cls1_rec = cls1_tp / (cls1_tp + cls1_fn) if (cls1_tp + cls1_fn) > 0 else 1.0
 
     return cls0_prec, cls0_rec, cls1_prec, cls1_rec
 
@@ -85,9 +92,9 @@ def compute_entropy(track_df: pd.DataFrame) -> float:
     cls0_prob = cls0_count / track_length
     cls1_prob = cls1_count / track_length
 
-    cls0_logprob = math.log(cls0_prob)
-    cls1_logprob = math.log(cls1_prob)
-
+    cls0_logprob = math.log(cls0_prob) if cls0_prob > 0.0 else -float('inf')
+    cls1_logprob = math.log(cls1_prob) if cls1_prob > 0.0 else -float('inf')
+    
     entropy = -(cls0_prob * cls0_logprob + cls1_prob * cls1_logprob)
 
     return entropy
@@ -102,11 +109,12 @@ all_record = [all_rowname, all_overall_acc, all_cls0_acc, all_cls1_acc, all_cls0
 data.append(all_record)
 
 if experiments:
-    all_df['experiment'] = all_df[file_colname].apply(lambda x: x.strip('__')[0])
+    all_df['experiment'] = all_df[file_colname].apply(lambda x: x.split('__')[0])
+    # print(all_df['experiment'].iloc[0])
 
     exp_names = all_df['experiment'].unique()
     for exp_name in exp_names:
-        exp_df = all_df[all_df['experimenet'] == exp_name]
+        exp_df = all_df[all_df['experiment'] == exp_name] # CHANGE: Small typo
 
         exp_rowname = f'exp_{exp_name}'
         exp_overall_acc, exp_cls0_acc, exp_cls1_acc = compute_accuracies(df=exp_df)
@@ -116,8 +124,8 @@ if experiments:
         data.append(exp_record)
 
 if tracks:
-    all_df['track'] = all_df[file_colname].apply(lambda x: '__'.join(x.strip('__')[:-1]) if data_type == 0
-                                                 else '_'.join(x.strip('_')[:-1]))
+    all_df['track'] = all_df[file_colname].apply(lambda x: '__'.join(x.split('__')[:-1]) if data_type == 0
+                                                 else '_'.join(x.split('_')[:-1]))
     
     trk_names = all_df['track'].unique()
     for trk_name in trk_names:
