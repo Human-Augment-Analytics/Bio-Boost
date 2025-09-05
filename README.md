@@ -2,14 +2,18 @@
 
 ## Github Restructure
 Running YOLOv11-cls
-- Eric 
+- Training: CLI
+- Evaluation: scripts/evaluation/yolo11_res.py
 
 Running YOLOv11 Obj Detection
-- Eric
+- Training: CLI
+- Evaluation:
 
 Bimodal Model
-- Charlie for Bimodal model
-- Eric for standalone Neural Net
+- Bimodal Model Training (Charlie):
+- Bimodal Model Evaluation (Charlie):
+- Standalone TemporalNet Training: 
+- Standalone TemporalNet Evaluation: scripts/evaluation/generate_predictions.py
 
 Hue Variance Scripts
 - Kailey
