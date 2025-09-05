@@ -1,5 +1,36 @@
 # Bio-Boost
 
+## Github Restructure
+Running YOLOv11-cls
+- Eric 
+
+Running YOLOv11 Obj Detection
+- Eric
+
+Bimodal Model
+- Charlie for Bimodal model
+- Eric for standalone Neural Net
+
+Hue Variance Scripts
+- Kailey
+
+Temporal Metrics Generation
+- Kailey
+
+Model Results Generation (accuracy, precision, etc)
+- Charlie and/or Eric
+
+SORT Scripts
+- Kailey or Bree
+
+Datasets (Zenodo)
+- Temporally Enhanced Coloration Dataset (Eric)
+- Bounding Box Cichlid Dataset (Eric or Charlie)
+- Temporal Metrics ran through Bimodal Model (Charlie)
+- Hue difference information (Kailey)
+- Standalone Temporal Metrics (Charlie or Eric)
+
+
 ## Abstract
 Object detection has numerous applications, from animal tracking to autonomous vehicles. However, certain object classes exhibit substantial similarity, posing challenges for accurate classification from single images. Standard object detection models may struggle to achieve high precision in such tasks. We propose a novel annotation methodology that combines detection with tracking to generate robust annotation sets from videos for training object detection and classification models with minimal additional annotation effort. By leveraging tracking to identify multiple instances of individual objects, our approach enriches the annotation data efficiently. The BioBoost model trained on our generated annotations achieved an accuracy of 99.6% demonstrating superior performance compared to those relying on traditional annotation methods, without demanding significant supplementary annotation time. This technique is particularly promising for datasets where object tracking can be leveraged to augment annotations in a highly efficient manner, minimizing additional annotations. 
 
