@@ -16,23 +16,22 @@ Bimodal Model
 - Standalone TemporalNet Evaluation: scripts/evaluation/generate_predictions.py
 
 Hue Variance Scripts
-- Kailey
+- Kailey (scripts/modeling/hue_variance/calculate_head_tail_hue_difference.py)
 
 Temporal Metrics Generation
-- Kailey
+- Kailey (scripts/modeling/temporal_metric_generation/temporal_metric_generation_functions.py)
 
 Model Results Generation (accuracy, precision, etc)
 - Charlie and/or Eric
 
 SORT Scripts
-- Kailey or Bree
-  ^ I found the custom SortFish class in Bio-Boost/scripts/tracking/run_sort_fish_detections.py
+- Kailey or Bree (Custom SortFish class is here: scripts/tracking/run_sort_fish_detections.py)
 
 Datasets (Zenodo)
 - Temporally Enhanced Coloration Dataset (Eric)
 - Bounding Box Cichlid Dataset (Eric or Charlie)
 - Temporal Metrics ran through Bimodal Model (Charlie)
-- Hue difference information (Kailey)
+- Hue difference information (Kailey) [scripts/modeling/hue_variance/experiment_hue_difference_by_class.csv]
 - Standalone Temporal Metrics (Charlie or Eric)
 
 
