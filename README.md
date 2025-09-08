@@ -26,6 +26,7 @@ Model Results Generation (accuracy, precision, etc)
 
 SORT Scripts
 - Kailey or Bree
+  ^ I found the custom SortFish class in Bio-Boost/scripts/tracking/run_sort_fish_detections.py
 
 Datasets (Zenodo)
 - Temporally Enhanced Coloration Dataset (Eric)
