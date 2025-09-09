@@ -7,13 +7,13 @@ Running YOLOv11-cls
 
 Running YOLOv11 Obj Detection
 - Training: CLI
-- Evaluation:
+- Evaluation (Charlie?): 
 
 Bimodal Model
 - Bimodal Model Training (Charlie):
 - Bimodal Model Evaluation (Charlie):
-- Standalone TemporalNet Training: 
-- Standalone TemporalNet Evaluation: scripts/evaluation/generate_predictions.py
+- Standalone TemporalNet Training (Eric): scripts/modeling/models/tnet_model.py 
+- Standalone TemporalNet Evaluation (Eric): scripts/evaluation/generate_predictions.py
 
 Hue Variance Scripts
 - Kailey (scripts/modeling/hue_variance/calculate_head_tail_hue_difference.py)
