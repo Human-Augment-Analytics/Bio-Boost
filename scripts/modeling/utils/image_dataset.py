@@ -34,24 +34,26 @@ class ImageDataset(Dataset):
         self.device = torch.device(device) if isinstance(device, str) else device
         self.preprocess_images = preprocess_images
         
-        # YOLO preprocessing pipeline - must exactly match YOLO's LetterBox preprocessing!
+        # YOLO preprocessing pipeline - must exactly match ALL YOLO inference steps!
         if preprocess_images:
             # Import LetterBox from ultralytics for exact matching
             try:
                 from ultralytics.data.augment import LetterBox
-                
+
                 # Use the same LetterBox that YOLO uses internally
                 self.letterbox = LetterBox(new_shape=(640, 640), auto=False, stride=32)
-                self.transform = transforms.ToTensor()  # Just convert to tensor, LetterBox handles resizing
+                self.use_exact_yolo_preprocessing = True
             except ImportError:
                 # Fallback to basic transforms if ultralytics not available
                 self.letterbox = None
+                self.use_exact_yolo_preprocessing = False
                 self.transform = transforms.Compose([
                     transforms.Resize((640, 640)),  
                     transforms.ToTensor(),
                 ])
         else:
-            self.transform = None
+            self.letterbox = None
+            self.use_exact_yolo_preprocessing = False
         
     def __len__(self) -> int:
         '''
@@ -82,21 +84,31 @@ class ImageDataset(Dataset):
         img_path = self.base_path + row['split'] + '/' + row['filepath']
         
         if self.preprocess_images:
-            # Load and preprocess image to tensor for direct model inference
+            # Load and preprocess image to match YOLO's exact inference preprocessing
             try:
+                # Load image as RGB (PIL loads as RGB by default)
                 image = Image.open(img_path).convert('RGB')
                 
-                if self.letterbox is not None:
-                    # Use exact YOLO LetterBox preprocessing
+                if self.use_exact_yolo_preprocessing:
+                    # Exactly match YOLO's inference preprocessing pipeline
+                    # Step 1: Convert PIL to numpy (RGB format)
                     image_np = np.array(image)
+                    
+                    # Step 2: Apply LetterBox (resize + pad with aspect ratio preservation)
                     letterboxed = self.letterbox(image=image_np)
-                    img_tensor = self.transform(Image.fromarray(letterboxed))
+                    
+                    # Step 3: Convert to tensor and normalize to [0,1] (ToTensor does this)
+                    img_tensor = transforms.ToTensor()(letterboxed)
+                    
+                    # Note: YOLO also does BGR->RGB conversion, but PIL is already RGB
+                    # Note: YOLO handles device transfer and dtype conversion in model
+                    img = img_tensor
                 else:
-                    # Fallback preprocessing
+                    # Fallback preprocessing (less accurate)
                     img_tensor = self.transform(image)
+                    img = img_tensor
                 
                 # Keep on CPU initially - DataLoader will move to GPU if needed
-                img = img_tensor
             except Exception as e:
                 print(f"Error loading image {img_path}: {e}")
                 # Return a blank image tensor as fallback
