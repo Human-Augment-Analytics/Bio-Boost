@@ -31,7 +31,7 @@ parser.add_argument('--gpu', action='store_true', default=False, help='Indicates
 parser.add_argument('--batch_size', type=int, default=640, help='The batch size to use (default: 640).')
 
 # miscellaneous options...
-parser.add_argument('--visualize', action='store_true', default=False, help='Tells the engine to take the results from the ran task and create visualization(s) if possible.')
+parser.add_argument('--visualize', action='store_true', default=False, help='Tells the engine to take the results from the ran task and create visualization(s) if possible (default: False).')
 
 args = parser.parse_args()
 
