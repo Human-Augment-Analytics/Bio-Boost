@@ -35,15 +35,24 @@ class AnimalBoostNet(nn.Module):
         self.tnet_hidden_sizes = tnet_hidden_sizes
         self.tnet_dropout = tnet_dropout
 
-        self.device = device
+        # Ensure device is a torch.device object for consistency
+        self.device = torch.device(device) if isinstance(device, str) else device
 
-        self.yolo = YOLO(yolo_weights).to(device)
-        self.yolo.eval()
+        # Initialize YOLO and get access to underlying model for efficiency
+        self.yolo_wrapper = YOLO(yolo_weights).to(self.device)
+        self.yolo_wrapper.eval()
 
-        for param in self.yolo.parameters():
+        # Extract the underlying PyTorch model for direct inference
+        self.yolo_model = self.yolo_wrapper.model
+        
+        # Setup preprocessing transforms (same as YOLO uses internally)
+        from ultralytics.data.augment import LetterBox
+        self.letterbox = LetterBox(640, auto=False, stride=32)  # YOLO input size
+        
+        for param in self.yolo_model.parameters():
             param.requires_grad = False
 
-        self.tnet = TNet(tnet_input_size, tnet_output_size, tnet_hidden_sizes, tnet_dropout).to(device)
+        self.tnet = TNet(tnet_input_size, tnet_output_size, tnet_hidden_sizes, tnet_dropout).to(self.device)
 
     def silence_yolo_verbosity(self, img: str) -> None:
         '''
@@ -54,15 +63,15 @@ class AnimalBoostNet(nn.Module):
         Output: None.
         '''
 
-        self.yolo(img)
-        self.yolo.predictor.args.verbose = False
+        self.yolo_wrapper(img)
+        self.yolo_wrapper.predictor.args.verbose = False
 
-    def forward(self, img: np.ndarray, temporal: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def forward(self, img: torch.Tensor, temporal: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         '''
         Performs a forward pass over the sub-modules in the AnimalBoostNet model.
 
         Input:
-            img: a batch of image file paths to pass through the YOLO image processing backbone.
+            img: a batch of preprocessed image tensors (on GPU) to pass through the YOLO image processing backbone.
             temporal: a batch of temporal features to pass through the TNet post-processing model.
 
         Output:
@@ -70,9 +79,12 @@ class AnimalBoostNet(nn.Module):
             preds: the argmax class predictions for each record in the input image/temporal batches, based on the calculated class probabilities.
         '''
         
-        yolo_results = self.yolo(img)
-        
-        yolo_logits = torch.tensor(np.array([yolo_results[idx].probs.data.cpu().numpy() for idx in range(len(yolo_results))]), dtype=torch.float32).to(self.device)
+        # Direct model inference for maximum efficiency - no YOLO wrapper overhead
+        with torch.no_grad():  # YOLO backbone is frozen
+            yolo_logits = self.yolo_model(img)
+            
+        # Ensure temporal features are on the correct device
+        temporal = temporal.to(self.device)
         tnet_logits = self.tnet(temporal)
 
         logits = yolo_logits + tnet_logits
