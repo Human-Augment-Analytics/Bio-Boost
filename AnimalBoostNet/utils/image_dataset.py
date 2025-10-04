@@ -1,18 +1,19 @@
 '''
 This module implements the ImageDataset used to train our combined model. This Dataset should be wrapped inside a dataloader.
+
+Requires editable installation of our modified fork of the Ultralytics library. See AnimalBoostNet/models/README.md for details.
 '''
 
-from typing import Any
+from ultralytics.data.augment import LetterBox
 
 from torch.utils.data import Dataset
+import torchvision.transforms as transforms
 import torch 
-import torch.nn.functional as F
 
+from typing import Any
+from PIL import Image
 import pandas as pd
 import numpy as np
-import cv2
-from PIL import Image
-import torchvision.transforms as transforms
 
 class ImageDataset(Dataset):
     '''
@@ -31,29 +32,28 @@ class ImageDataset(Dataset):
             preprocess_images: if True, preprocesses images to match YOLO input format.
         '''
         
-        self.df = df
-        self.base_path = base_path
-        self.device = torch.device(device) if isinstance(device, str) else device
-        self.preprocess_images = preprocess_images
+        self.df: pd.DataFrame = df
+        self.base_path: str = base_path
+        self.device: torch.device = torch.device(device) if isinstance(device, str) else device
+        self.preprocess_images: bool = preprocess_images
         
-        # YOLO preprocessing pipeline - must exactly match ALL YOLO inference steps!
+        # YOLO preprocessing pipeline, must exactly match ALL YOLO inference steps!
         if preprocess_images:
-            # Import LetterBox from ultralytics for exact matching
             try:
                 # Use the same LetterBox that YOLO uses internally
-                self.letterbox = LetterBox(new_shape=(640, 640), auto=False, stride=32)
+                self.letterbox: LetterBox = LetterBox(new_shape=(640, 640), auto=False, stride=32)
                 self.use_exact_yolo_preprocessing = True
             except ImportError:
                 # Fallback to basic transforms if ultralytics not available
-                self.letterbox = None
-                self.use_exact_yolo_preprocessing = False
-                self.transform = transforms.Compose([
+                self.letterbox: LetterBox = None
+                self.use_exact_yolo_preprocessing: bool = False
+                self.transform: transforms.Compose = transforms.Compose([
                     transforms.Resize((640, 640)),  
                     transforms.ToTensor(),
                 ])
         else:
-            self.letterbox = None
-            self.use_exact_yolo_preprocessing = False
+            self.letterbox: LetterBox = None
+            self.use_exact_yolo_preprocessing: bool = False
         
     def __len__(self) -> int:
         '''
@@ -132,7 +132,7 @@ class ImageDataset(Dataset):
         )
         is_male: torch.Tensor = torch.tensor(row['is_male'], dtype=torch.long)
             
-        return img, temp_features, is_male
+        return img.to(self.device) if self.preprocess_images else img, temp_features.to(self.device), is_male.to(self.device)
 
 
 # Backward compatibility alias

@@ -1,3 +1,4 @@
+from typing import Any
 from tqdm import tqdm
 
 from models.animal_boost_net import AnimalBoostNet as ABNet
@@ -24,44 +25,45 @@ def train_abnet(dataloader: DataLoader, abnet: ABNet, optimizer: optim.Optimizer
         Average accuracy, computed across all batches.
     '''
 
-    total_loss = 0
-    total_correct = 0
-    total_samples = 0
+    total_loss: int = 0
+    total_correct: int = 0
+    total_samples: int = 0
     
-    num_batches = len(dataloader)
-    train_loop = tqdm(dataloader, total=num_batches)
+    num_batches: int = len(dataloader)
+    train_loop: tqdm[Any] = tqdm(dataloader, total=num_batches)
     
     for batch, (img, temp_features, is_male) in enumerate(train_loop):
         # forward pass
         probs, preds = abnet(img, temp_features)
         
-        num_samples = temp_features.shape[0]
-        num_correct = (preds == is_male).sum().item()
+        num_samples: int = temp_features.shape[0]
+        num_correct: int = (preds == is_male).sum().item()
         
         total_samples += num_samples
         total_correct += num_correct
         
         # compute loss, backward pass
-        batch_loss = loss_fn(probs, is_male)
+        batch_loss: torch.Tensor = loss_fn(probs, is_male)
         
         batch_loss.backward()
         optimizer.step()
         optimizer.zero_grad()
 
-        losses_sum = batch_loss * num_samples
-        total_loss += losses_sum
+
+        batch_loss_sum: float = batch_loss.item() * num_samples
+        total_loss += batch_loss_sum
         
         # compute metrics
-        batch_acc = num_correct / num_samples
+        batch_acc: float = num_correct / num_samples
         
-        avg_loss = total_loss / total_samples
-        avg_acc = total_correct / total_samples
+        avg_loss: float = total_loss / total_samples
+        avg_acc: float = total_correct / total_samples
         
         train_loop.set_description(f'Epoch {epoch} Train, Batch [{batch + 1}/{num_batches}]')
-        train_loop.set_postfix({'Loss': f'{batch_loss:.4f} [{avg_loss:.4f}]',
+        train_loop.set_postfix({'Loss': f'{batch_loss.item():.4f} [{avg_loss:.4f}]',
                          'Acc': f'{(batch_acc * 100):.2f}% [{(avg_acc * 100):.2f}%]'})
         
-    return avg_loss.cpu().detach().item(), avg_acc
+    return avg_loss.item(), avg_acc
 
 def validate_abnet(dataloader: DataLoader, abnet: ABNet, loss_fn: nn.Module, epoch: int):
     '''
@@ -78,12 +80,12 @@ def validate_abnet(dataloader: DataLoader, abnet: ABNet, loss_fn: nn.Module, epo
         Average accuracy, computed across all batches.
     '''
 
-    total_loss = 0
-    total_correct = 0
-    total_samples = 0
+    total_loss: int = 0
+    total_correct: int = 0
+    total_samples: int = 0
     
-    num_batches = len(dataloader)
-    valid_loop = tqdm(dataloader, total=num_batches)
+    num_batches: int = len(dataloader)
+    valid_loop: tqdm[Any] = tqdm(dataloader, total=num_batches)
     
     abnet.eval()
     abnet.tnet.eval()
@@ -93,16 +95,16 @@ def validate_abnet(dataloader: DataLoader, abnet: ABNet, loss_fn: nn.Module, epo
             # forward pass
             probs, preds = abnet(img, temp_features)
 
-            num_samples = temp_features.shape[0]
-            num_correct = (preds == is_male).sum().item()
+            num_samples: int = temp_features.shape[0]
+            num_correct: int = (preds == is_male).sum().item()
 
             total_samples += num_samples
             total_correct += num_correct
 
             # compute loss, backward pass
-            batch_loss = loss_fn(probs, is_male)
+            batch_loss: torch.Tensor = loss_fn(probs, is_male)
 
-            losses_sum = batch_loss * num_samples
+            losses_sum: Any | float = batch_loss * num_samples
             total_loss += losses_sum
 
             # compute metrics
