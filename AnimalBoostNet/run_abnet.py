@@ -3,7 +3,7 @@ from typing import List
 from utils.engine import Engine
 import argparse
 
-parser = argparse.ArgumentParser(description='Takes arguments to train/validate, evaluate, or run inference.')
+parser = argparse.ArgumentParser(description='Takes arguments to train/validate or evaluate.')
 
 # general arguments...
 parser.add_argument('task', type=str, choices=['train_val', 'eval'], help='Indicates the task to be performed by the engine.')

@@ -21,9 +21,9 @@ parser.add_argument('trainbasedir', type=str, help='The absolute path to the fin
 parser.add_argument('validbasedir', type=str, help='The absolute path to the validation image dataset\'s root folder.')
 parser.add_argument('checkpointdir', type=str, help='The path to the directory to store the checkpoint files.')
 
-parser.add_argument('--variant', type=str, default='mobilenetv2_100',
-                    choices=['mobilenetv2_035', 'mobilenetv2_050', 'mobilenetv2_075', 'mobilenetv2_100', 'mobilenetv2_110d', 'mobilenetv2_120d', 'mobilenetv2_140'],
-                    help='The MobileNetv2 model variant to be used.')
+parser.add_argument('--variant', type=str, default='mobilenetv2_100.ra_in1k',
+                    choices=['mobilenetv2_050.lamb_in1k', 'lcnet_050.ra2_in1k', 'tinynet_e.in1k', 'resnet10t.c3_in1k'],
+                    help='The model variant to be used.')
 parser.add_argument('--numclasses', type=int, default=2, help='The number of classes in the fine-tuning dataset.')
 parser.add_argument('--batchsize', type=int, default=128, help='The batch size to be used during fine-tuning.')
 parser.add_argument('--numworkers', type=int, default=0, help='The number of data loading workers to use during fine-tuning.')
@@ -48,15 +48,18 @@ valid_base_dir: str = args.validbasedir
 
 save_dir: str = args.checkpointdir
 
-variant: str = args.model
+variant: str = args.variant
 num_classes: int = args.numclasses
 batch_size: int = args.batchsize
 num_workers: int = args.numworkers
-num_epochs: int = args.num_epochs
+num_epochs: int = args.numepochs
 run: int = args.run
 
 pretrained: bool = args.pretrained
 gpu: bool = args.gpu and torch.cuda.is_available()
+
+if not gpu and args.gpu:
+    print('Warning: GPU acceleration not available, using CPU')
 
 visualize: bool = args.visualize
 grid: bool = args.grid and visualize
@@ -70,7 +73,7 @@ model: nn.Module = timm.create_model(
     num_classes=num_classes
 ).to(device=device)
 
-data_config = timm.data.resolve_model_config(model)
+data_config = timm.data.resolve_data_config(model.pretrained_cfg)
 train_transforms = timm.data.create_transform(**data_config, is_training=True)
 valid_transforms = timm.data.create_transform(**data_config, is_training=False)
 

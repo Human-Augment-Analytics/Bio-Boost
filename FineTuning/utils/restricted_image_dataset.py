@@ -25,6 +25,6 @@ class RestrictedImageDataset(Dataset):
         img: Image = Image.open(file_path).convert('RGB')
         img: torch.Tensor = self.transforms(img)
         
-        label: int = 1 if '/Male/' in file_path else 0
+        label: int = torch.tensor(1 if '/Male/' in file_path else 0, dtype=torch.long)
         
         return img.to(self.device), label.to(self.device)

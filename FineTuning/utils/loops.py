@@ -1,6 +1,6 @@
 from typing import Tuple, Any, List, Dict
 
-from checkpointing import save_checkpoint, compare_checkpoints
+from .checkpointing import save_checkpoint
 
 from torch.utils.data import DataLoader
 import torch.optim as optim
@@ -21,13 +21,16 @@ def train_loop(train_dataloader: DataLoader, model: nn.Module, loss_fn: nn.Modul
     for batch, (imgs, labels) in enumerate(train_loop):
         out: torch.Tensor = model(imgs)
 
+        probs: torch.Tensor = out.softmax(dim=1)
+        preds: torch.Tensor = probs.argmax(dim=1)
+
         num_samples: int = imgs.shape[0]
-        num_correct: int = (out == labels).sum().item()
+        num_correct: int = (preds == labels).sum().item()
 
         total_samples += num_samples
         total_correct += num_correct
 
-        batch_loss: torch.Tensor = loss_fn(out, labels)
+        batch_loss: torch.Tensor = loss_fn(probs, labels)
         batch_loss.backward()
 
         optimizer.step()
@@ -60,14 +63,18 @@ def valid_loop(valid_dataloader: DataLoader, model: nn.Module, loss_fn: nn.Modul
         for batch, (imgs, labels) in enumerate(valid_loop):
             out: torch.Tensor = model(imgs)
 
+            probs: torch.Tensor = out.softmax(dim=1)
+            preds: torch.Tensor = probs.argmax(dim=1)
+
             num_samples: int = imgs.shape[0]
-            num_correct: int = (out == labels).sum().item()
+            num_correct: int = (preds == labels).sum().item()
 
             total_samples += num_samples
             total_correct += num_correct
 
-            batch_loss: float = loss_fn(out, labels).item()
+            batch_loss: float = loss_fn(probs, labels).item()
             total_batch_loss: float = batch_loss * num_samples
+            total_loss += total_batch_loss
 
             batch_acc: float = num_correct / num_samples
 
@@ -75,7 +82,7 @@ def valid_loop(valid_dataloader: DataLoader, model: nn.Module, loss_fn: nn.Modul
             avg_acc: float = total_correct / total_samples
 
             valid_loop.set_description(f'Epoch {epoch} Valid, Batch [{batch + 1}/{num_batches}]')
-            valid_loop.set_postfix({'Loss': f'{batch_loss.item():.4f} [{avg_loss:.4f}]',
+            valid_loop.set_postfix({'Loss': f'{batch_loss:.4f} [{avg_loss:.4f}]',
                             'Acc': f'{(batch_acc * 100):.2f}% [{(avg_acc * 100):.2f}%]'})
             
     return (total_loss / total_samples), (total_correct / total_samples)
@@ -108,9 +115,9 @@ def main_loop(train_dataloader: DataLoader, valid_dataloader: DataLoader, model:
         results['valid_accs'].append(valid_acc)
 
         save_checkpoint(model=model, train_losses=results['train_losses'], train_accs=results['train_accs'],
-                        valid_losses=results['valid_losses'], valid_accs=results['valid_accs'], eppch=epoch,
+                        valid_losses=results['valid_losses'], valid_accs=results['valid_accs'], epoch=epoch,
                         run=run, save_dir=save_dir)
 
-    compare_checkpoints(save_dir=save_dir)
+    # compare_checkpoints(save_dir=save_dir)
 
     return results
