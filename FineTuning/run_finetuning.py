@@ -22,7 +22,7 @@ parser.add_argument('validbasedir', type=str, help='The absolute path to the val
 parser.add_argument('checkpointdir', type=str, help='The path to the directory to store the checkpoint files.')
 
 parser.add_argument('--variant', type=str, default='mobilenetv2_100.ra_in1k',
-                    choices=['mobilenetv2_050.lamb_in1k', 'lcnet_050.ra2_in1k', 'tinynet_e.in1k', 'resnet10t.c3_in1k'],
+                    choices=['mobilenetv2_050.lamb_in1k', 'lcnet_050.ra2_in1k', 'tinynet_e.in1k', 'resnet10t.c3_in1k', 'efficientvit_m0.r224_in1k'],
                     help='The model variant to be used.')
 parser.add_argument('--numclasses', type=int, default=2, help='The number of classes in the fine-tuning dataset.')
 parser.add_argument('--batchsize', type=int, default=128, help='The batch size to be used during fine-tuning.')
@@ -30,7 +30,7 @@ parser.add_argument('--numworkers', type=int, default=0, help='The number of dat
 parser.add_argument('--numepochs', type=int, default=100, help='The number of epochs to run fine-tuning and validation over.')
 parser.add_argument('--run', type=int, default=0, help='An integer label for the run, used for file saving.')
 
-parser.add_argument('--pretrained', action='store_true', default=False, help='Instructs the program to use a pre-trained MobileNetv2.')
+parser.add_argument('--pretrained', action='store_true', default=False, help='Instructs the program to use a pre-trained model.')
 parser.add_argument('--gpu', action='store_true', default=False, help='Instructs the program to use GPU acceleration (if available).')
 
 parser.add_argument('--visualize', action='store_true', default=False, help='Instructs the program to visualize the results.')
