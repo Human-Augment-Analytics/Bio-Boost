@@ -1,3 +1,8 @@
+'''
+This script allows the user to fine-tune a model from Huggingface's timm library on a restricted dataset using a CLI tool.
+'''
+
+# import necessary libraries
 from typing import Dict, List
 import argparse
 
@@ -13,14 +18,17 @@ import timm
 
 import pandas as pd
 
+# initialize parser
 parser: argparse.ArgumentParser = argparse.ArgumentParser(description='Takes arguments to run MobileNet fine-tuning/validation.')
 
+# required arguments
 parser.add_argument('trainfiles', type=str, help='The absolute path to the CSV file containing the image filepaths for fine-tuning.')
 parser.add_argument('validfiles', type=str, help='The absolute path to the CSV file containing the image filepaths for validation.')
 parser.add_argument('trainbasedir', type=str, help='The absolute path to the fine-tuning image dataset\'s root folder.')
 parser.add_argument('validbasedir', type=str, help='The absolute path to the validation image dataset\'s root folder.')
 parser.add_argument('checkpointdir', type=str, help='The path to the directory to store the checkpoint files.')
 
+# fine-tuning specific options
 parser.add_argument('--variant', type=str, default='mobilenetv2_100.ra_in1k',
                     choices=['mobilenetv2_050.lamb_in1k', 'lcnet_050.ra2_in1k', 'tinynet_e.in1k', 'resnet10t.c3_in1k', 'efficientvit_m0.r224_in1k'],
                     help='The model variant to be used.')
@@ -30,14 +38,17 @@ parser.add_argument('--numworkers', type=int, default=0, help='The number of dat
 parser.add_argument('--numepochs', type=int, default=100, help='The number of epochs to run fine-tuning and validation over.')
 parser.add_argument('--run', type=int, default=0, help='An integer label for the run, used for file saving.')
 
+# fine-tuning specific flags
 parser.add_argument('--pretrained', action='store_true', default=False, help='Instructs the program to use a pre-trained model.')
 parser.add_argument('--gpu', action='store_true', default=False, help='Instructs the program to use GPU acceleration (if available).')
 
+# visualization flags
 parser.add_argument('--visualize', action='store_true', default=False, help='Instructs the program to visualize the results.')
 parser.add_argument('--grid', action='store_true', default=False, help='Instructs the visualizer to add a grid to its generated plots.')
 parser.add_argument('--markers', action='store_true', default=False, help='Instructs the visualizer to add markers to each point in the generated plots.')
 parser.add_argument('--extrema', action='store_true', default=False, help='Instructs the visualizer to label extrema in the plots (min validation loss, max validation accuracy).')
 
+# parse and store arguments
 args: argparse.Namespace = parser.parse_args()
 
 train_files: str = args.trainfiles
@@ -58,6 +69,7 @@ run: int = args.run
 pretrained: bool = args.pretrained
 gpu: bool = args.gpu and torch.cuda.is_available()
 
+# warn user if they wanted to use GPU acceleration but it's not available
 if not gpu and args.gpu:
     print('Warning: GPU acceleration not available, using CPU')
 
@@ -66,6 +78,7 @@ grid: bool = args.grid and visualize
 markers: bool = args.markers and visualize
 extrema: bool = args.extrema and visualize
 
+# initializze model using passed variant option
 device: torch.device = torch.device('cuda' if gpu else 'cpu')
 model: nn.Module = timm.create_model(
     model_name=variant,
@@ -73,10 +86,12 @@ model: nn.Module = timm.create_model(
     num_classes=num_classes
 ).to(device=device)
 
+# create data transforms
 data_config = timm.data.resolve_data_config(model.pretrained_cfg)
 train_transforms = timm.data.create_transform(**data_config, is_training=True)
 valid_transforms = timm.data.create_transform(**data_config, is_training=False)
 
+# read and initialize training/validation sets
 train_df: pd.DataFrame = pd.read_csv(train_files)
 valid_df: pd.DataFrame = pd.read_csv(valid_files)
 
@@ -91,16 +106,31 @@ valid_dataloader: DataLoader = DataLoader(dataset=valid_dataset, batch_size=batc
                                           shuffle=False, num_workers=num_workers)
 
 
+# initialize optimizer and loss function for fine-tuning
 optimizer: optim.Optimizer = optim.Adam(model.parameters(), lr=1e-4, weight_decay=1e-5)
 loss_fn: nn.Module = nn.CrossEntropyLoss()
 
-def main() -> None:
+
+def main() -> Dict[str, List]:
+    '''
+    This defines the main functionality of the CLI tool.
+    '''
+
+    # run the main fine-tuning loop
     data: Dict[str, List] = main_loop(train_dataloader=train_dataloader, valid_dataloader=valid_dataloader,
                                       model=model, loss_fn=loss_fn, optimizer=optimizer, num_epochs=num_epochs,
                                       run=run, save_dir=save_dir)
     
+    # if the user wants to visualize the results, generate the plots
     if visualize:
         generate_plots(data=data, grid=grid, markers=markers, extrema=extrema)
 
+    return data
+
+# run the script
 if __name__ == '__main__':
-    results = main()
+    results: Dict[str, List] = main()
+
+    # print the results
+    for key, value in results.items():
+        print(f'{key}: {value}')

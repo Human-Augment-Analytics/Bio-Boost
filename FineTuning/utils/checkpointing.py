@@ -1,11 +1,31 @@
-from typing import List, Any
-import os, sys
+'''
+Here we define the checkpointing functionality for fine-tuning. This is solely for preservign results: the dataset is small enough 
+that we don't really need to worry about timing out or other interruptions.
+'''
+
+# import necessary libraries
+from typing import List
 
 import torch.nn as nn
 import torch
 
-def save_checkpoint(model: nn, train_losses: List[float], valid_losses: List[float], train_accs: List[float],
-                    valid_accs: List[float], epoch: int, run: int, save_dir: str) -> None:    
+def save_checkpoint(model: nn.Module, train_losses: List[float], valid_losses: List[float], train_accs: List[float],
+                    valid_accs: List[float], epoch: int, run: int, save_dir: str) -> None:
+    '''
+    This function defines how all the relevant fine-tuning information is saved after each epoch.
+
+    Inputs:
+        model: the PyTorch module who's weights are to be saved.
+        train_losses: a list containing the training losses up to and including the epoch being saved.
+        valid_losses: a list containing the validation losses up to and including the epoch being saved.
+        train_accs: a list containing the training accuracies up to and including the epoch being saved.
+        valid_accs: a list containing the validation accuracies up to and including the epoch being saved.
+        epoch: the number of the epoch being saved.
+        run: a user-defined integer run number, used to identify information from different runs.
+        save_dir: the string filepath to the directory where the checkpoints are to be saved.
+    '''    
+
+    # define dictionary containing all info to be saved
     checkpoint = {
         'epoch': epoch,
         'model_state': model.state_dict(),
@@ -15,29 +35,8 @@ def save_checkpoint(model: nn, train_losses: List[float], valid_losses: List[flo
         'valid_accs': valid_accs
     }
 
+    # save the checkpoint dictionary to a .pt file and notify the user
     checkpoint_path = save_dir + f'/run{run}_epoch{epoch}.pt'
     torch.save(checkpoint, checkpoint_path)
 
     print(f'Epoch {epoch} Checkpoint Saved!')
-
-# def compare_checkpoints(save_dir: str) -> None:
-#     all_checkpoints: List[str] = os.listdir(save_dir)
-
-#     max_acc: float = 0.0
-#     max_acc_checkpoint_path: str = None
-
-#     for checkpoint_file in all_checkpoints:
-#         checkpoint_path: str = f'{save_dir}{checkpoint_file}'
-#         if not os.path.exists(checkpoint_path):
-#             print(f'No checkpoint found with absolute path "{checkpoint_path}"!')
-
-#             sys.exit(1)
-
-#         checkpoint: Any = torch.load(checkpoint_path)
-        
-#         last_acc: float = checkpoint['valid_accs'][-1]
-#         if last_acc > max_acc:
-#             max_acc = last_acc
-#             max_acc_checkpoint_path = checkpoint_path
-
-#     print(f'Checkpoint with maximum validation accuracy @ "{max_acc_checkpoint_path}"')
