@@ -8,7 +8,6 @@ from typing import Tuple, Any
 from PIL import Image
 from torch.utils.data import Dataset
 import torch
-import timm
 
 import pandas as pd
 
