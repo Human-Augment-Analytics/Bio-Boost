@@ -40,6 +40,8 @@ def train_loop(train_dataloader: DataLoader, model: ABNet, loss_fn: nn.Module, o
     model.backbone.eval()
     model.head.train()
     for batch, (imgs, temp_features, labels) in enumerate(train_loop):
+        optimizer.zero_grad()
+
         # get logits from forward pass
         logits: torch.Tensor = model(imgs, temp_features)
 
@@ -57,9 +59,7 @@ def train_loop(train_dataloader: DataLoader, model: ABNet, loss_fn: nn.Module, o
         # calculate loss, backpropagate, and update optimizer
         batch_loss: torch.Tensor = loss_fn(probs, labels)
         batch_loss.backward()
-
         optimizer.step()
-        optimizer.zero_grad()
 
         # calculate loss and accuracy stats
         total_batch_loss: float = batch_loss.item() * num_samples
@@ -135,7 +135,7 @@ def valid_loop(valid_dataloader: DataLoader, model: ABNet, loss_fn: nn.Module, e
     # return avg loss and avg accuracy
     return (total_loss / total_samples), (total_correct / total_samples)
 
-def main_loop(train_dataloader: DataLoader, valid_dataloader: DataLoader, model: ABNet, loss_fn: nn.Module, optimizer: optim.Optimizer, num_epochs: int, run: int, save_dir: str) -> Dict[str, List]:
+def main_loop(train_dataloader: DataLoader, valid_dataloader: DataLoader, model: ABNet, loss_fn: nn.Module, optimizer: optim.Optimizer, scheduler: optim.lr_scheduler.LRScheduler, num_epochs: int, run: int, save_dir: str) -> Dict[str, List]:
     '''
     This is the main loop over all the epochs.
 
@@ -179,6 +179,9 @@ def main_loop(train_dataloader: DataLoader, valid_dataloader: DataLoader, model:
 
         results['train_accs'].append(train_acc)
         results['valid_accs'].append(valid_acc)
+
+        # step scheduler
+        scheduler.step(valid_loss)
 
         # save the model state and the results from the current epoch
         save_checkpoint(model=model, train_losses=results['train_losses'], train_accs=results['train_accs'],

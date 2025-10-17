@@ -53,7 +53,7 @@ def train_loop(train_dataloader: DataLoader, model: nn.Module, loss_fn: nn.Modul
         total_correct += num_correct
 
         # calculate loss, backpropagate, and update optimizer
-        batch_loss: torch.Tensor = loss_fn(probs, labels)
+        batch_loss: torch.Tensor = loss_fn(out, labels)
         batch_loss.backward()
 
         optimizer.step()
@@ -115,7 +115,7 @@ def valid_loop(valid_dataloader: DataLoader, model: nn.Module, loss_fn: nn.Modul
             total_correct += num_correct
 
             # calculate loss and accuracy stats
-            batch_loss: float = loss_fn(probs, labels).item()
+            batch_loss: float = loss_fn(out, labels).item()
             total_batch_loss: float = batch_loss * num_samples
             total_loss += total_batch_loss
 

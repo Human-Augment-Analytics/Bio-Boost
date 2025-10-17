@@ -4,9 +4,10 @@ that we don't really need to worry about timing out or other interruptions.
 '''
 
 # import necessary libraries
-from typing import List
+from typing import List, Any
 from models.abnet import AnimalBoostNet as ABNet
 
+import torch.nn as nn
 import torch
 
 def save_checkpoint(model: ABNet, train_losses: List[float], valid_losses: List[float], train_accs: List[float],
@@ -28,7 +29,7 @@ def save_checkpoint(model: ABNet, train_losses: List[float], valid_losses: List[
     # define dictionary containing all info to be saved
     checkpoint = {
         'epoch': epoch,
-        'head_state': model.head.state_dict(),
+        'model_state': model.head.state_dict(),
         'train_losses': train_losses,
         'train_accs': train_accs,
         'valid_losses': valid_losses,
@@ -40,3 +41,8 @@ def save_checkpoint(model: ABNet, train_losses: List[float], valid_losses: List[
     torch.save(checkpoint, checkpoint_path)
 
     print(f'Epoch {epoch} Checkpoint Saved!')
+
+def load_checkpoint(model: nn.Module, checkpoint_path: str) -> None:
+    checkpoint: Any = torch.load(checkpoint_path)
+
+    model.load_state_dict(checkpoint['model_state'])

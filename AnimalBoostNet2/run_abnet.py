@@ -3,6 +3,7 @@ import argparse
 
 from models.abnet import AnimalBoostNet as ABNet
 from utils.restricted_dataset import RestrictedDataset
+from utils.checkpointing import load_checkpoint
 from utils.visualize import generate_plots
 from utils.loops import main_loop
 
@@ -17,7 +18,7 @@ import pandas as pd
 parser: argparse.ArgumentParser = argparse.ArgumentParser(description='Script for running AnimalBoostNet tasks.')
 
 parser.add_argument('task', type=str, choices=['train', 'eval', 'infer'], help='The task to use AnimalBoostNet for.')
-parser.add_argument('variant', type=str, help='The model variant to use for the AnimalBoostNet backbone.')
+parser.add_argument('variant', type=str, choices=['mobilenetv2_050.lamb_in1k'], help='The model variant to use for the AnimalBoostNet backbone.')
 parser.add_argument('weights', type=str, help='The absolute path to the pre-trained backbone model weights.')
 parser.add_argument('trainfiles', type=str, help='The absolute path to the CSV containing the restricted training dataset.')
 parser.add_argument('validfiles', type=str, help='The absolute path to the CSV containing the restricted validation dataset.')
@@ -29,6 +30,8 @@ parser.add_argument('--inputsize', type=int, default=7, help='The number of temp
 parser.add_argument('--hiddensizes', type=List[int], nargs='+', default=[128, 64], help='A list of hidden layer sizes for the TemporalNet.')
 parser.add_argument('--numclasses', type=int, default=2, help='The number of classes in the dataset.')
 parser.add_argument('--dropout', type=float, default=0.5, help='The dropout probability for the TemporalNet to use.')
+parser.add_argument('--temperature', type=float, default=10.0, help='The temperature to use for the soft differentiable approximation in ABNet.')
+
 parser.add_argument('--numepochs', type=int, default=25, help='The number of epochs to train over.')
 parser.add_argument('--batchsize', type=int, default=16, help='The batch size to use.')
 parser.add_argument('--numworkers', type=int, default=0, help='The number of workers to use.')
@@ -55,6 +58,8 @@ input_size: int = args.inputsize
 hidden_sizes: List[int] = args.hiddensizes
 num_classes: int = args.numclasses
 dropout: float = args.dropout
+temperature: float = args.temperature
+
 num_epochs: int = args.numepochs
 batch_size: int = args.batchsize
 num_workers: int = args.numworkers
@@ -71,13 +76,14 @@ extrema: bool = args.extrema
 
 abnet: ABNet = ABNet(
     backbone_name=variant,
-    backbone_weights=weights,
     tnet_input_size=input_size,
     tnet_output_size=num_classes,
     tnet_hidden_sizes=hidden_sizes,
     tnet_dropout=dropout,
+    temperature=temperature,
     device='cuda' if gpu else 'cpu'
 )
+load_checkpoint(abnet.backbone, weights)
 
 data_config = timm.data.resolve_data_config(abnet.backbone.pretrained_cfg)
 train_transforms = timm.data.create_transform(**data_config, is_training=True)
@@ -98,7 +104,22 @@ train_dataloader: DataLoader = DataLoader(dataset=train_dataset, batch_size=batc
 valid_dataloader: DataLoader = DataLoader(dataset=valid_dataset, batch_size=batch_size,
                                           shuffle=False, num_workers=num_workers)
 
-optimizer: optim.Optimizer = optim.Adam(abnet.head.parameters(), lr=1e-4, weight_decay=1e-5)
+optimizer: optim.Optimizer = optim.Adam(abnet.parameters(), lr=1e-5, weight_decay=1e-6)
+# Option 1: ReduceLROnPlateau (recommended for your case)
+scheduler: optim.lr_scheduler.ReduceLROnPlateau = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 
+                                                                                        mode='min',
+                                                                                        factor=0.5, 
+                                                                                        patience=5,
+                                                                                        min_lr=1e-6,
+                                                                                        threshold=0.005)
+scheduler: optim.lr_scheduler.CosineAnnealingLR = optim.lr_scheduler.CosineAnnealingLR(optimizer, 
+                                                                                        T_max=num_epochs,
+                                                                                        eta_min=1e-6)
+scheduler: optim.lr_scheduler.CosineAnnealingWarmRestarts = optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, 
+                                                                                                            T_0=30,
+                                                                                                            T_mult=2,
+                                                                                                            eta_min=1e-6)
+
 loss_fn: nn.Module = nn.CrossEntropyLoss()
 
 def main() -> Dict[str, List]:
@@ -108,8 +129,8 @@ def main() -> Dict[str, List]:
 
     # run the main fine-tuning loop
     data: Dict[str, List] = main_loop(train_dataloader=train_dataloader, valid_dataloader=valid_dataloader,
-                                      model=abnet, loss_fn=loss_fn, optimizer=optimizer, num_epochs=num_epochs,
-                                      run=run, save_dir=checkpoint_dir)
+                                      model=abnet, loss_fn=loss_fn, optimizer=optimizer, scheduler=scheduler,
+                                      num_epochs=num_epochs, run=run, save_dir=checkpoint_dir)
     
     # if the user wants to visualize the results, generate the plots
     if visualize:
