@@ -105,16 +105,15 @@ valid_dataloader: DataLoader = DataLoader(dataset=valid_dataset, batch_size=batc
                                           shuffle=False, num_workers=num_workers)
 
 optimizer: optim.Optimizer = optim.Adam(abnet.parameters(), lr=1e-5, weight_decay=1e-6)
-# Option 1: ReduceLROnPlateau (recommended for your case)
-scheduler: optim.lr_scheduler.ReduceLROnPlateau = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 
-                                                                                        mode='min',
-                                                                                        factor=0.5, 
-                                                                                        patience=5,
-                                                                                        min_lr=1e-6,
-                                                                                        threshold=0.005)
-scheduler: optim.lr_scheduler.CosineAnnealingLR = optim.lr_scheduler.CosineAnnealingLR(optimizer, 
-                                                                                        T_max=num_epochs,
-                                                                                        eta_min=1e-6)
+# scheduler: optim.lr_scheduler.ReduceLROnPlateau = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 
+#                                                                                         mode='min',
+#                                                                                         factor=0.5, 
+#                                                                                         patience=5,
+#                                                                                         min_lr=1e-6,
+#                                                                                         threshold=0.005)
+# scheduler: optim.lr_scheduler.CosineAnnealingLR = optim.lr_scheduler.CosineAnnealingLR(optimizer, 
+#                                                                                         T_max=num_epochs,
+#                                                                                         eta_min=1e-6)
 scheduler: optim.lr_scheduler.CosineAnnealingWarmRestarts = optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, 
                                                                                                             T_0=30,
                                                                                                             T_mult=2,
